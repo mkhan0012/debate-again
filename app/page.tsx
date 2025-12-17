@@ -110,9 +110,13 @@ export default async function Home() {
             </span>
           </Link>
           
-          <button className="px-8 py-4 bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 hover:text-white rounded-full transition-all hover:scale-105 backdrop-blur-sm">
+          {/* UPDATED: Changed from <button> to <Link> */}
+          <Link 
+            href="/about" 
+            className="px-8 py-4 bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 hover:text-white rounded-full transition-all hover:scale-105 backdrop-blur-sm"
+          >
             See How It Works
-          </button>
+          </Link>
         </div>
       </main>
 
