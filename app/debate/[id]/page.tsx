@@ -76,7 +76,7 @@ export default async function DebatePage({
 
         {/* --- MESSAGES --- */}
         <div className="space-y-10">
-          {round.arguments.map((arg, index) => {
+          {round.arguments.map((arg: any, index: number) => {
             let content = '[Decryption Error]'
             try { content = decrypt(arg.contentEncrypted, arg.iv) } catch {}
 
