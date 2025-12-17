@@ -22,9 +22,11 @@ model Round {
   id        String     @id @default(uuid())
   topic     String
   status    String     @default("ACTIVE")
+  userSide  String     @default("For")  
+  mode      String     @default("GENERAL")
   createdAt DateTime   @default(now())
   arguments Argument[]
-  participants Participant[] // Add this relation
+  participants Participant[]
 }
 
 model Participant {

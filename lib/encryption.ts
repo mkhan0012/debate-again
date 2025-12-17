@@ -1,28 +1,27 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 
-// Ensure the key exists and is valid
-const HEX_KEY = process.env.ENCRYPTION_KEY;
 const ALGORITHM = 'aes-256-cbc';
 
-if (!HEX_KEY || HEX_KEY.length !== 64) {
-  throw new Error(
-    'ENCRYPTION_KEY must be a 64-character hex string (32 bytes). Check your .env file.'
-  );
+// Helper: validates key ONLY when needed (prevents app crash on startup)
+function getKey() {
+  const HEX_KEY = process.env.ENCRYPTION_KEY;
+  
+  if (!HEX_KEY) {
+    throw new Error('Missing ENCRYPTION_KEY in .env file');
+  }
+  
+  if (HEX_KEY.length !== 64) {
+    throw new Error(`ENCRYPTION_KEY must be 64 characters long (Received: ${HEX_KEY.length}). It must be a 32-byte hex string.`);
+  }
+
+  return Buffer.from(HEX_KEY, 'hex');
 }
 
-// Convert the hex string from .env back into a Buffer
-const SECRET_KEY = Buffer.from(HEX_KEY, 'hex');
-
-/**
- * Encrypts a string using AES-256-CBC.
- * Returns an object containing the encrypted content (hex) and the IV (hex).
- */
 export function encrypt(text: string) {
-  // Generate a unique Initialization Vector (IV) for every encryption
+  const SECRET_KEY = getKey(); // Validate here, not at top level
   const iv = randomBytes(16);
   
   const cipher = createCipheriv(ALGORITHM, SECRET_KEY, iv);
-  
   let encrypted = cipher.update(text, 'utf8', 'hex');
   encrypted += cipher.final('hex');
   
@@ -32,11 +31,8 @@ export function encrypt(text: string) {
   };
 }
 
-/**
- * Decrypts a string using AES-256-CBC.
- * Requires the encrypted content (hex) and the original IV (hex).
- */
 export function decrypt(encryptedText: string, ivHex: string) {
+  const SECRET_KEY = getKey(); // Validate here, not at top level
   const iv = Buffer.from(ivHex, 'hex');
   
   const decipher = createDecipheriv(ALGORITHM, SECRET_KEY, iv);

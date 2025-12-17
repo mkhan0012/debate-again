@@ -1,3 +1,4 @@
+// app/actions/debate.ts
 'use server'
 
 import { prisma } from '@/lib/prisma'
@@ -8,16 +9,17 @@ import { z } from 'zod'
 const CreateDebateSchema = z.object({
   topic: z.string().min(5, "Topic must be at least 5 characters long"),
   position: z.enum(["For", "Against"]),
+  mode: z.enum(["GENERAL", "POLITICS_INDIA"]), // <--- Add validation
 })
 
-export async function createDebate(topic: string, position: string) {
+export async function createDebate(topic: string, position: string, mode: string) {
   const session = await getSession()
   if (!session || !session.userId) redirect('/login')
 
-  const result = CreateDebateSchema.safeParse({ topic, position })
+  // Validate inputs
+  const result = CreateDebateSchema.safeParse({ topic, position, mode })
   
   if (!result.success) {
-    // ✅ FIX: Use '.issues' here
     const firstError = result.error.issues[0]?.message || "Invalid input data";
     return { error: firstError }
   }
@@ -29,6 +31,8 @@ export async function createDebate(topic: string, position: string) {
       data: {
         topic: result.data.topic,
         status: "ACTIVE",
+        userSide: result.data.position,
+        mode: result.data.mode, // <--- Save the mode
       }
     })
 

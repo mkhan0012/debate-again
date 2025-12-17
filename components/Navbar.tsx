@@ -39,7 +39,7 @@ export default async function Navbar() {
               // --- STATE: LOGGED IN ---
               <div className="flex items-center gap-4">
                 <Link href="/profile">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-cyan-900/20 hover:scale-105 transition-transform">
+                  <div className="w-8 h-8 rounded-full bg-linear-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-cyan-900/20 hover:scale-105 transition-transform">
                     {userInitial}
                   </div>
                 </Link>

@@ -1,5 +1,7 @@
-// NO 'use server' HERE - This file exports utility functions
 import OpenAI from "openai";
+
+// 'use server' REMOVED intentionally. 
+// This file is a utility library for your actions, not a set of actions itself.
 
 const openai = new OpenAI({
   apiKey: process.env.GROQ_API_KEY || "",
@@ -8,7 +10,7 @@ const openai = new OpenAI({
 
 const MODELS = ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"];
 
-// --- UTILITY (Sync) ---
+// --- 1. UTILITY: EXTRACT JSON (Exported) ---
 export function extractJson(text: string) {
   try {
     let cleaned = text.replace(/```json|```/g, '').trim();
@@ -23,55 +25,122 @@ export function extractJson(text: string) {
   }
 }
 
-// --- UTILITY (Async) ---
+// --- 2. UTILITY: GENERATE WITH FALLBACK (Exported) ---
 export async function generateWithFallback(promptText: string): Promise<string> {
-  // If API key is missing during build, don't crash, just return empty (for static analysis)
   if (!process.env.GROQ_API_KEY) return "";
-
+  
   try {
+    // Try Fast Model
     const completion = await openai.chat.completions.create({
       messages: [{ role: "user", content: promptText }],
-      model: MODELS[0], // Fast model
-      temperature: 0.6,
-      max_tokens: 500,
+      model: MODELS[0], 
+      temperature: 0.85, 
+      max_tokens: 600,
     });
     return completion.choices[0]?.message?.content || "";
   } catch (e) {
     console.error("Primary AI Failed, trying backup...");
     try {
+        // Try Smart Model
         const backup = await openai.chat.completions.create({
             messages: [{ role: "user", content: promptText }],
-            model: MODELS[1], // Smart model
-            temperature: 0.6,
-            max_tokens: 500,
+            model: MODELS[1], 
+            temperature: 0.85,
+            max_tokens: 600,
         });
         return backup.choices[0]?.message?.content || "";
     } catch (finalErr) {
-        console.error("All AI models failed");
         throw new Error("AI Service Unavailable");
     }
   }
 }
 
-// --- SERVER ACTIONS (Async Only) ---
-// These are called from the client
+// --- 3. MODERATION ACTION ---
 export async function moderateContent(text: string) {
-  'use server'; // Action Directive
   try {
-    const prompt = `Check for hate speech. Return JSON: { "safe": boolean }. Text: "${text}"`;
+    const prompt = `
+      Analyze this text: "${text}"
+      Does it contain insults, cursing, or hostility?
+      Return JSON: { "is_hostile": boolean, "intensity": "low" | "high" }
+    `;
     const rawText = await generateWithFallback(prompt);
     return JSON.parse(extractJson(rawText));
   } catch (e) {
-    return { safe: true }; 
+    return { is_hostile: false, intensity: "low" }; 
   }
 }
 
-export async function generateAiRebuttal(topic: string, position: string, chatHistory: string[]) {
-  'use server'; // Action Directive
+// --- 4. REBUTTAL GENERATION (With Indian Politics Mode) ---
+export async function generateAiRebuttal(
+  topic: string, 
+  aiStance: string, 
+  chatHistory: string[], 
+  isHostile: boolean = false,
+  mode: string = "GENERAL"
+) {
   try {
-    const prompt = `Topic: ${topic}. Stance: ${position}. History: ${chatHistory.slice(-3)}. Write 1 sentence rebuttal.`;
+    let context = "";
+
+    // Context Switching
+    if (mode === "POLITICS_INDIA") {
+      context = `
+        CONTEXT: This is a debate specifically about INDIAN POLITICS.
+        - References: Use examples from the Indian Constitution, Supreme Court verdicts, Lok Sabha, and history.
+        - Tone: Passionate, intellectual, and sharp (like a seasoned Indian news panelist).
+        - Vocabulary: Use terms like "Bill," "Act," "Ordinance," "Constitutional Bench."
+      `;
+    } else {
+      context = `
+        CONTEXT: This is a general logical debate.
+        - References: Use global logic, philosophy, and standard facts.
+        - Tone: Professional, logical, and structured.
+      `;
+    }
+
+    let prompt = "";
+
+    if (isHostile) {
+      // 🤬 TOXIC MODE
+      prompt = `
+        ${context}
+        You are in a heated argument. The opponent was rude.
+        TOPIC: "${topic}"
+        YOUR STANCE: "${aiStance}"
+        
+        INSTRUCTIONS:
+        1. ROAST THEM BACK. 
+        2. ${mode === "POLITICS_INDIA" ? "Mock their lack of knowledge about India's ground reality." : "Mock their logical fallacies."}
+        3. Be savage but logical.
+        4. Keep it short (2-3 sentences).
+        
+        DEBATE HISTORY:
+        ${chatHistory.slice(-3).join("\n")}
+        
+        YOUR RESPONSE (Savage comeback):
+      `;
+    } else {
+      // 🧠 NORMAL MODE
+      prompt = `
+        ${context}
+        You are a world-class debater.
+        TOPIC: "${topic}"
+        YOUR STANCE: "${aiStance}"
+        
+        INSTRUCTIONS:
+        1. Dismantle the opponent's logic.
+        2. Be direct, sharp, and confident.
+        3. Do not be polite. Fight for your side.
+        4. Keep it short (max 2 sentences).
+        
+        DEBATE HISTORY:
+        ${chatHistory.slice(-3).join("\n")}
+        
+        YOUR RESPONSE (Direct rebuttal):
+      `;
+    }
+    
     return await generateWithFallback(prompt);
   } catch (error) {
-    return "I need a moment to think.";
+    return "I need a moment to process your argument.";
   }
 }

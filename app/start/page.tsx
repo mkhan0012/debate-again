@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { createDebate } from "@/app/actions/debate"; // Import the server action
+import { createDebate } from "@/app/actions/debate"; 
 
-// Icons (Keep these as they were)
+// Icons
 const MagicIcon = () => (
   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
@@ -25,6 +25,7 @@ const UsersIcon = () => (
 export default function StartDebatePage() {
   const [topic, setTopic] = useState("");
   const [position, setPosition] = useState<"For" | "Against">("For");
+  const [mode, setMode] = useState<"GENERAL" | "POLITICS_INDIA">("GENERAL"); // <--- NEW STATE
   const [timeLimit, setTimeLimit] = useState("5m");
   const [isInitializing, setIsInitializing] = useState(false);
   
@@ -37,20 +38,18 @@ export default function StartDebatePage() {
     "Remote work harms innovation",
   ];
 
-  // --- UPDATED HANDLER ---
   const handleStart = async () => {
     if (!topic.trim()) return;
     
     setIsInitializing(true);
     
-    // Call the Server Action
-    const result = await createDebate(topic, position);
+    // --- UPDATED: PASS 'mode' TO SERVER ACTION ---
+    const result = await createDebate(topic, position, mode);
     
     if (result?.error) {
-      alert(result.error); // Show error if validation fails
+      alert(result.error); 
       setIsInitializing(false);
     }
-    // If successful, the server action will redirect us automatically
   };
 
   return (
@@ -146,10 +145,41 @@ export default function StartDebatePage() {
                   </div>
                 </div>
 
-                {/* 03: Time Controls */}
+                {/* 03: Mode Selection (NEW FEATURE) */}
                 <div className="space-y-3">
+                  <label className="text-xs font-mono text-accent uppercase tracking-widest">
+                    03 // Protocol Mode
+                  </label>
+                  <div className="grid grid-cols-2 gap-3 h-12">
+                    <button
+                      onClick={() => setMode("GENERAL")}
+                      className={`rounded-lg text-xs font-bold tracking-wide uppercase transition-all duration-200 border flex flex-col items-center justify-center leading-tight ${
+                        mode === "GENERAL"
+                          ? "bg-white text-black border-white"
+                          : "bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:text-zinc-300"
+                      }`}
+                    >
+                      General
+                    </button>
+                    <button
+                      onClick={() => setMode("POLITICS_INDIA")}
+                      className={`rounded-lg text-xs font-bold tracking-wide uppercase transition-all duration-200 border flex flex-col items-center justify-center leading-tight ${
+                        mode === "POLITICS_INDIA"
+                          ? "bg-orange-500/20 text-orange-400 border-orange-500 shadow-[0_0_15px_rgba(249,115,22,0.2)]"
+                          : "bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:text-zinc-300"
+                      }`}
+                    >
+                      <span>🇮🇳 Indian</span>
+                      <span>Politics</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 04: Time Controls (Bumped down) */}
+              <div className="space-y-3">
                   <label className="text-xs font-mono text-accent uppercase tracking-widest flex items-center gap-2">
-                    03 // Time Control <ClockIcon />
+                    04 // Time Control <ClockIcon />
                   </label>
                   <div className="grid grid-cols-3 gap-2 h-12">
                     {['3m', '5m', '10m'].map((time) => (
@@ -158,7 +188,7 @@ export default function StartDebatePage() {
                         onClick={() => setTimeLimit(time)}
                         className={`rounded-lg text-sm font-medium border transition-all duration-200 ${
                           timeLimit === time
-                            ? "bg-white text-black border-white"
+                            ? "bg-zinc-800 text-white border-zinc-600"
                             : "bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:text-zinc-300"
                         }`}
                       >
@@ -167,7 +197,6 @@ export default function StartDebatePage() {
                     ))}
                   </div>
                 </div>
-              </div>
 
               {/* Action Button */}
               <div className="pt-4">

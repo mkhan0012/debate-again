@@ -156,7 +156,7 @@ export default async function AboutPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 bg-[#050505] rounded-3xl overflow-hidden">
               
               {/* IS */}
-              <div className="p-12 flex flex-col items-center text-center border-b sm:border-b-0 sm:border-r border-slate-800/50 hover:bg-white/2 transition-colors">
+              <div className="p-12 flex flex-col items-center text-center border-b sm:border-b-0 sm:border-r border-slate-800/50 hover:bg-white/5 transition-colors">
                 <div className="w-16 h-16 rounded-full bg-green-900/20 flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(74,222,128,0.1)]">
                   <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -170,7 +170,7 @@ export default async function AboutPage() {
               </div>
 
               {/* IS NOT */}
-              <div className="p-12 flex flex-col items-center text-center hover:bg-white/2 transition-colors">
+              <div className="p-12 flex flex-col items-center text-center hover:bg-white/5 transition-colors">
                 <div className="w-16 h-16 rounded-full bg-red-900/20 flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(248,113,113,0.1)]">
                    <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

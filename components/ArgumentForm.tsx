@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react';
-import { submitUserArgument,triggerAiResponse } from '@/app/action';
+import { submitUserArgument, triggerAiResponse } from '@/app/action';
 
 export function ArgumentForm({ roundId, participantId }: { roundId: string, participantId: string }) {
   const formRef = useRef<HTMLFormElement>(null);
