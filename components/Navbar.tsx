@@ -1,11 +1,14 @@
 import Link from 'next/link';
-import { getSession } from '@/lib/session'; // Import session checker
-import { logout } from '@/app/actions/auth'; // Import logout action
+import { getSession } from '@/lib/session';
+import { logout } from '@/app/actions/auth';
 
 export default async function Navbar() {
-  // 1. Check if user is logged in
+  // Safe session check
   const session = await getSession();
   const isLoggedIn = !!session?.userId;
+
+  // Initial (User letter or fallback)
+  const userInitial = session?.userId ? 'U' : 'G'; 
 
   return (
     <nav className="fixed top-0 w-full z-50 border-b border-zinc-800 bg-black/80 backdrop-blur-md">
@@ -33,12 +36,11 @@ export default async function Navbar() {
           {/* Dynamic Auth Section */}
           <div className="flex items-center gap-4 text-sm font-medium">
             {isLoggedIn ? (
-              // --- STATE: LOGGED IN (Show Profile & Logout) ---
+              // --- STATE: LOGGED IN ---
               <div className="flex items-center gap-4">
                 <Link href="/profile">
-                  <div className="w-8 h-8 rounded-full bg-linear-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-cyan-900/20 hover:scale-105 transition-transform">
-                    {/* Display first letter of name if available, else 'U' */}
-                    U
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-cyan-900/20 hover:scale-105 transition-transform">
+                    {userInitial}
                   </div>
                 </Link>
                 
@@ -49,7 +51,7 @@ export default async function Navbar() {
                 </form>
               </div>
             ) : (
-              // --- STATE: LOGGED OUT (Show Login/Signup) ---
+              // --- STATE: LOGGED OUT ---
               <>
                 <Link href="/login" className="text-zinc-400 hover:text-white transition-colors">
                   Log in

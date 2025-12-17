@@ -1,5 +1,8 @@
+// 1. Add this line at the VERY TOP
+import 'dotenv/config'; 
+
 import { prisma } from './lib/prisma';
-import bcrypt from 'bcryptjs'; // Make sure to import this
+import bcrypt from 'bcryptjs';
 
 async function main() {
   console.log('🌱 Seeding database...');
@@ -13,14 +16,13 @@ async function main() {
   });
 
   // 2. Create a User (Required for Auth)
-  // We hash a simple password so you can actually log in with this user
   const hashedPassword = await bcrypt.hash("password123", 10);
   
   const user = await prisma.user.create({
     data: {
       name: "Test User 1",
       email: "test@example.com",
-      password: hashedPassword, // Password is: password123
+      password: hashedPassword, 
     }
   });
 
@@ -28,8 +30,8 @@ async function main() {
   const participant = await prisma.participant.create({
     data: {
       role: "DEBATER",
-      userId: user.id,   // Link to the User we just created
-      roundId: round.id, // Link to the Round
+      userId: user.id,   
+      roundId: round.id, 
     }
   });
 
