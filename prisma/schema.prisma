@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// 1. Add this User model
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?  // This maps to 'username' in your form
+  password  String
+  createdAt DateTime @default(now())
+  
+  // Relations
+  participants Participant[]
+}
+
+model Round {
+  id        String     @id @default(uuid())
+  topic     String
+  status    String     @default("ACTIVE")
+  createdAt DateTime   @default(now())
+  arguments Argument[]
+  participants Participant[] // Add this relation
+}
+
+model Participant {
+  id        String     @id @default(uuid())
+  role      String     @default("DEBATER")
+  
+  // 2. Link Participant to User
+  userId    String?    // Make optional initially or required if you always have users
+  user      User?      @relation(fields: [userId], references: [id])
+  
+  roundId   String?    // Make optional to fix existing data issues or required
+  round     Round?     @relation(fields: [roundId], references: [id])
+  
+  createdAt DateTime   @default(now())
+  arguments Argument[]
+}
+
+model Argument {
+  id               String      @id @default(uuid())
+  contentEncrypted String
+  iv               String
+  aiAnalysis       Json?
+  roundId          String
+  round            Round       @relation(fields: [roundId], references: [id])
+  participantId    String
+  participant      Participant @relation(fields: [participantId], references: [id])
+  createdAt        DateTime    @default(now())
+}
