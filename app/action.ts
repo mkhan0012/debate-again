@@ -62,7 +62,8 @@ export async function triggerAiResponse(roundId: string, userArgumentText: strin
   const mode = (round as any).mode || "GENERAL"; // <--- NEW: Get the selected mode
 
   // 3. Prepare Chat History for Context
-  const chatHistory = round.arguments.map(arg => {
+  // FIX: Added (arg: any) to prevent the build error
+  const chatHistory = round.arguments.map((arg: any) => {
     try {
       const text = decrypt(arg.contentEncrypted, arg.iv);
       const role = arg.participant.role === 'AI' ? 'AI' : 'Opponent';
