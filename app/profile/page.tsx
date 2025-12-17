@@ -24,10 +24,12 @@ export default async function ProfilePage() {
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 border-b border-zinc-800 pb-8">
           <div className="flex items-center gap-6">
             <div className="w-20 h-20 rounded-2xl bg-linear-to-br from-cyan-600 to-blue-700 flex items-center justify-center text-3xl text-white font-bold shadow-2xl shadow-cyan-900/20">
-              {user?.name?.[0]?.toUpperCase() || "U"}
+              {/* FIX: Changed user.name to user.username */}
+              {user?.username?.[0]?.toUpperCase() || "U"}
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-white mb-1">{user?.name || "Debater"}</h1>
+              {/* FIX: Changed user.name to user.username */}
+              <h1 className="text-3xl font-bold text-white mb-1">{user?.username || "Debater"}</h1>
               <p className="text-zinc-500 font-mono text-sm uppercase tracking-widest">
                 Level 1 • Novice Logician
               </p>
