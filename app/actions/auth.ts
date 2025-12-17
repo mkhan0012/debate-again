@@ -30,15 +30,20 @@ export async function signup(prevState: any, formData: FormData) {
   const { email, password, username } = result.data;
 
   try {
-    // 2. Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
+    // 2. Check if user already exists (Email OR Username)
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email },
+          { username }
+        ]
+      },
     })
 
     if (existingUser) {
       return {
         errors: {
-          email: ['User with this email already exists.'],
+          form: 'User with this email or username already exists.',
         },
       }
     }
@@ -49,7 +54,7 @@ export async function signup(prevState: any, formData: FormData) {
     // 4. Create User in DB
     const user = await prisma.user.create({
       data: {
-        name: username, // Mapping 'username' from form to 'name' in DB
+        username, // <--- FIXED: Now correctly maps to 'username' column
         email,
         password: hashedPassword,
       },
@@ -61,7 +66,7 @@ export async function signup(prevState: any, formData: FormData) {
   } catch (error) {
     console.error('Signup error:', error)
     return {
-      message: 'Database Error: Failed to create user.',
+      errors: { form: 'Database Error: Failed to create user.' },
     }
   }
 

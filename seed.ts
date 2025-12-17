@@ -1,6 +1,5 @@
-// 1. Add this line at the VERY TOP
+// seed.ts
 import 'dotenv/config'; 
-
 import { prisma } from './lib/prisma';
 import bcrypt from 'bcryptjs';
 
@@ -15,18 +14,18 @@ async function main() {
     }
   });
 
-  // 2. Create a User (Required for Auth)
+  // 2. Create a User
   const hashedPassword = await bcrypt.hash("password123", 10);
   
   const user = await prisma.user.create({
     data: {
-      name: "Test User 1",
+      username: "testuser1", // Matches schema.prisma
       email: "test@example.com",
       password: hashedPassword, 
     }
   });
 
-  // 3. Create a Participant (Linked to User & Round)
+  // 3. Create a Participant
   const participant = await prisma.participant.create({
     data: {
       role: "DEBATER",
@@ -36,12 +35,7 @@ async function main() {
   });
 
   console.log('✅ Seed successful!');
-  console.log('-------------------------------------------');
-  console.log('👤 Created User: test@example.com / password123');
-  console.log('📋 COPY THESE IDS FOR YOUR CODE:');
-  console.log(`Round ID:       ${round.id}`);
-  console.log(`Participant ID: ${participant.id}`);
-  console.log('-------------------------------------------');
+  console.log(`User: test@example.com / password123`);
 }
 
 main()

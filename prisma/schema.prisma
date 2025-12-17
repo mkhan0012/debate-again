@@ -1,16 +1,18 @@
+// prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+
 }
 
-// 1. Add this User model
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
-  name      String?  // This maps to 'username' in your form
+  username  String   @unique // <--- Added Unique Username
   password  String
   createdAt DateTime @default(now())
   
@@ -18,11 +20,13 @@ model User {
   participants Participant[]
 }
 
+// --- DEBATE MODELS (Unchanged) ---
+
 model Round {
   id        String     @id @default(uuid())
   topic     String
   status    String     @default("ACTIVE")
-  userSide  String     @default("For")  
+  userSide  String     @default("For")
   mode      String     @default("GENERAL")
   createdAt DateTime   @default(now())
   arguments Argument[]
@@ -33,11 +37,10 @@ model Participant {
   id        String     @id @default(uuid())
   role      String     @default("DEBATER")
   
-  // 2. Link Participant to User
-  userId    String?    // Make optional initially or required if you always have users
+  userId    String?    
   user      User?      @relation(fields: [userId], references: [id])
   
-  roundId   String?    // Make optional to fix existing data issues or required
+  roundId   String?
   round     Round?     @relation(fields: [roundId], references: [id])
   
   createdAt DateTime   @default(now())
