@@ -6,6 +6,17 @@ import bcrypt from 'bcryptjs'
 import { createSession, deleteSession } from '@/lib/session'
 import { redirect } from 'next/navigation'
 
+// --- 1. Define Standard State Type (Fixes TypeScript Build Error) ---
+export type AuthState = {
+  errors?: {
+    username?: string[];
+    email?: string[];
+    password?: string[];
+    form?: string; // Used for general errors (login failed, db error)
+  };
+  message?: string; // Used for global success/error messages
+}
+
 // --- Validation Schemas ---
 const SignupSchema = z.object({
   username: z.string().min(2, { message: 'Username must be at least 2 characters' }),
@@ -19,7 +30,7 @@ const LoginSchema = z.object({
 })
 
 // --- Sign Up Action ---
-export async function signup(prevState: any, formData: FormData) {
+export async function signup(prevState: AuthState | undefined, formData: FormData): Promise<AuthState> {
   // 1. Validate Form Data
   const result = SignupSchema.safeParse(Object.fromEntries(formData));
 
@@ -30,7 +41,7 @@ export async function signup(prevState: any, formData: FormData) {
   const { email, password, username } = result.data;
 
   try {
-    // 2. Check if user already exists (Email OR Username)
+    // 2. Check if user already exists
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [
@@ -43,7 +54,7 @@ export async function signup(prevState: any, formData: FormData) {
     if (existingUser) {
       return {
         errors: {
-          form: 'User with this email or username already exists.',
+          email: ['User with this email or username already exists.'],
         },
       }
     }
@@ -51,10 +62,10 @@ export async function signup(prevState: any, formData: FormData) {
     // 3. Hash Password
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    // 4. Create User in DB
+    // 4. Create User in DB (FIXED: Uses 'username' column)
     const user = await prisma.user.create({
       data: {
-        username, // <--- FIXED: Now correctly maps to 'username' column
+        username: username, // <--- Correctly maps to the database column
         email,
         password: hashedPassword,
       },
@@ -66,16 +77,16 @@ export async function signup(prevState: any, formData: FormData) {
   } catch (error) {
     console.error('Signup error:', error)
     return {
-      errors: { form: 'Database Error: Failed to create user.' },
+      message: 'Database Error: Failed to create user. Please try again.',
     }
   }
 
-  // 6. Redirect to Profile or Select Mode
+  // 6. Redirect to Profile
   redirect('/profile')
 }
 
 // --- Login Action ---
-export async function login(prevState: any, formData: FormData) {
+export async function login(prevState: AuthState | undefined, formData: FormData): Promise<AuthState> {
   // 1. Validate Form Data
   const result = LoginSchema.safeParse(Object.fromEntries(formData));
 
