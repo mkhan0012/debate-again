@@ -1,233 +1,192 @@
-import Link from "next/link";
-import { getSession } from "@/lib/session";
+import Link from 'next/link'
+import { Sword, Zap, ShieldAlert, Users, BrainCircuit, Activity, ArrowRight, Scale, CheckCircle2, XCircle, MessageSquare } from 'lucide-react'
 
-export const metadata = {
-  title: "About | Arguely",
-  description: "Why we are building a platform for structured disagreement.",
-};
-
-export default async function AboutPage() {
-  const session = await getSession();
-  const isLoggedIn = !!session?.userId;
-
+export default function AboutPage() {
   return (
-    <div className="relative min-h-screen bg-[#030303] text-slate-300 font-sans selection:bg-purple-500/30 overflow-x-hidden">
+    <div className="min-h-screen bg-[#030303] text-zinc-300 font-sans selection:bg-cyan-500/30 overflow-x-hidden -mt-16">
       
-      {/* --- INJECT CUSTOM ANIMATIONS (Same as Home) --- */}
+      {/* --- ANIMATIONS --- */}
       <style>{`
-        @keyframes float {
-          0% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
-          100% { transform: translateY(0px); }
-        }
-        @keyframes glow {
-          0%, 100% { opacity: 0.5; filter: blur(100px); }
-          50% { opacity: 0.8; filter: blur(120px); }
-        }
         @keyframes slideUp {
           from { opacity: 0; transform: translateY(30px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes shine {
-          to { background-position: 200% center; }
+        @keyframes pulse-glow {
+          0%, 100% { opacity: 0.3; transform: scale(1); }
+          50% { opacity: 0.6; transform: scale(1.1); }
         }
-        .animate-float { animation: float 6s ease-in-out infinite; }
-        .animate-glow-pulse { animation: glow 8s ease-in-out infinite; }
-        .animate-slide-up { animation: slideUp 0.8s ease-out forwards; opacity: 0; }
+        .animate-slide-up { animation: slideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; }
         .delay-100 { animation-delay: 100ms; }
         .delay-200 { animation-delay: 200ms; }
         .delay-300 { animation-delay: 300ms; }
         .delay-500 { animation-delay: 500ms; }
-        
-        .text-shimmer {
-          background-size: 200% auto;
-          animation: shine 5s linear infinite;
-        }
-        
-        /* Glass Card Style */
-        .glass-card {
-          background: rgba(255, 255, 255, 0.03);
-          backdrop-filter: blur(12px);
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-          transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .glass-card:hover {
-          background: rgba(255, 255, 255, 0.06);
-          border-color: rgba(139, 92, 246, 0.3); /* Purple tint hover */
-          transform: translateY(-5px);
-          box-shadow: 0 10px 40px -10px rgba(139, 92, 246, 0.15);
-        }
       `}</style>
 
-      {/* --- ANIMATED BACKGROUND ORBS --- */}
+      {/* --- BACKGROUND AMBIENCE --- */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        {/* Purple Orb (Top Left) */}
-        <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-900/20 rounded-full mix-blend-screen animate-glow-pulse animate-float" />
-        {/* Blue Orb (Bottom Right) */}
-        <div className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] bg-blue-900/20 rounded-full mix-blend-screen animate-glow-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] bg-cyan-900/10 rounded-full mix-blend-screen blur-[100px]" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[800px] h-[800px] bg-purple-900/10 rounded-full mix-blend-screen blur-[100px]" />
       </div>
 
-      <div className="relative z-10 max-w-5xl mx-auto px-6 py-28">
+      <main className="relative z-10 pt-32 pb-20 px-6 max-w-7xl mx-auto">
         
-        {/* 1. Hero / Problem Statement */}
-        <section className="mb-32 text-center">
-          <h1 className="text-5xl md:text-7xl font-bold text-white mb-8 tracking-tight animate-slide-up">
-            About <span className="text-transparent bg-clip-text bg-linear-to-r from-purple-400 via-pink-500 to-red-500 text-shimmer">Arguely</span>
+        {/* 1. HERO: THE MISSION */}
+        <div className="text-center mb-32 animate-slide-up">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-900/80 border border-zinc-800 backdrop-blur-md mb-8">
+            <Scale className="w-4 h-4 text-cyan-400" />
+            <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">The Manifesto</span>
+          </div>
+          <h1 className="text-5xl md:text-8xl font-black text-white mb-8 tracking-tight leading-none">
+            Fixing the <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600">Public Square.</span>
           </h1>
-          
-          <h2 className="text-2xl md:text-3xl font-light text-slate-200 mb-10 leading-snug animate-slide-up delay-100">
-            Online arguments rarely lead to clarity.<br/>
-            <span className="text-slate-500 text-xl">We are changing the physics of the conversation.</span>
-          </h2>
-          
-          <div className="max-w-3xl mx-auto text-slate-400 text-lg leading-relaxed animate-slide-up delay-200">
-            <p className="mb-6">
-              Most internet discussions are driven by speed, emotion, and the desire to win. 
-              Strong arguments are ignored, weak claims go unchallenged, and meaningful dialogue breaks down.
-            </p>
-            <div className="inline-block px-4 py-1 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-200 text-sm font-medium">
-              This project explores a different approach.
-            </div>
-          </div>
-        </section>
-
-        {/* 2. What We're Building & AI Role */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-32 animate-slide-up delay-300">
-          
-          {/* Card: Building */}
-          <div className="glass-card p-8 rounded-2xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-cyan-500/20 transition-all" />
-            
-            <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-              <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-cyan-900/50 text-cyan-400 text-sm">01</span>
-              The Platform
-            </h3>
-            <p className="text-slate-400 mb-8 leading-relaxed">
-              We are building a structured debate platform where discussions are slow, focused, and evidence-based.
-            </p>
-            <ul className="space-y-4 text-sm text-slate-300">
-              {[
-                "Topics are clearly defined",
-                "Participants take a clear position",
-                "Claims require evidence",
-                "Debates follow structured rounds"
-              ].map((item, i) => (
-                <li key={i} className="flex gap-3 items-center">
-                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Card: AI Role */}
-          <div className="glass-card p-8 rounded-2xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-purple-500/20 transition-all" />
-            
-            <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-              <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-purple-900/50 text-purple-400 text-sm">AI</span>
-              The Analyst
-            </h3>
-            <p className="text-slate-400 mb-8 leading-relaxed">
-              AI is <span className="text-white font-medium">not a judge</span>. It acts as a neutral analyst to highlight inconsistencies.
-            </p>
-            <ul className="space-y-4 text-sm text-slate-300">
-              {[
-                "Highlighting unsupported claims",
-                "Identifying logical inconsistencies",
-                "Comparing evidence quality",
-                "Reducing emotional bias"
-              ].map((item, i) => (
-                <li key={i} className="flex gap-3 items-center">
-                  <div className="w-1.5 h-1.5 rounded-full bg-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
-        {/* 3. Is vs Isn't */}
-        <section className="mb-32 animate-slide-up delay-500">
-          <h3 className="text-3xl font-bold text-white mb-12 text-center">What This Is — and Isn’t</h3>
-          
-          <div className="relative p-px rounded-3xl bg-linear-to-r from-slate-800 via-slate-700 to-slate-800">
-            <div className="grid grid-cols-1 sm:grid-cols-2 bg-[#050505] rounded-3xl overflow-hidden">
-              
-              {/* IS */}
-              <div className="p-12 flex flex-col items-center text-center border-b sm:border-b-0 sm:border-r border-slate-800/50 hover:bg-white/5 transition-colors">
-                <div className="w-16 h-16 rounded-full bg-green-900/20 flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(74,222,128,0.1)]">
-                  <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <ul className="space-y-4 text-slate-300 font-medium">
-                  <li>A space for thoughtful disagreement</li>
-                  <li>A tool for learning through opposing views</li>
-                  <li>An experiment in discourse</li>
-                </ul>
-              </div>
-
-              {/* IS NOT */}
-              <div className="p-12 flex flex-col items-center text-center hover:bg-white/5 transition-colors">
-                <div className="w-16 h-16 rounded-full bg-red-900/20 flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(248,113,113,0.1)]">
-                   <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </div>
-                <ul className="space-y-4 text-slate-300 font-medium">
-                  <li>Not a comment section</li>
-                  <li>Not for personal attacks</li>
-                  <li>Not for viral outrage</li>
-                </ul>
-              </div>
-
-            </div>
-          </div>
-        </section>
-
-        {/* 4. Transparency & Vision */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-16 mb-24 animate-slide-up" style={{ animationDelay: '600ms' }}>
-          <div>
-            <h3 className="text-xl font-bold text-white mb-4 border-l-4 border-slate-700 pl-4">Openness & Transparency</h3>
-            <p className="text-slate-400 mb-6 leading-relaxed">
-              This platform is intentionally open to critique. Users are encouraged to question assumptions, debate ideas respectfully, and challenge the system’s design.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="text-xl font-bold text-white mb-4 border-l-4 border-slate-700 pl-4">The Long-Term Vision</h3>
-            <p className="text-slate-400 mb-6 leading-relaxed">
-              We’re starting with a web-based experience focused on design quality. If useful, we will expand to mobile apps and educational use cases.
-            </p>
-          </div>
-        </section>
-
-        {/* 5. Closing Belief */}
-        <section className="text-center py-20 border-t border-slate-800/50 animate-slide-up" style={{ animationDelay: '700ms' }}>
-          <h3 className="text-xs font-mono text-cyan-500 mb-6 uppercase tracking-[0.2em]">Our Core Belief</h3>
-          
-          <p className="text-2xl sm:text-4xl text-transparent bg-clip-text bg-linear-to-b from-white to-slate-400 font-bold leading-tight max-w-4xl mx-auto mb-10">
-            "Arguments don’t have to be loud to be strong.<br /> Disagreement doesn’t have to be hostile."
+          <p className="text-xl md:text-2xl text-zinc-400 max-w-3xl mx-auto leading-relaxed font-light">
+            Online discourse is broken. It's dominated by echo chambers, ad hominem attacks, and endless shouting. 
+            <span className="text-white font-medium block mt-2">Arguely creates a structured arena where logic wins, not volume.</span>
           </p>
-          
-          {/* Action Button styled like Home */}
-          <Link 
-            href={isLoggedIn ? "/start" : "/login"}
-            className="group relative inline-flex items-center gap-2 px-10 py-4 bg-white text-black font-bold rounded-full overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.4)]"
-          >
-            <div className="absolute inset-0 w-full h-full bg-linear-to-r from-transparent via-slate-200 to-transparent -translate-x-full group-hover:animate-[shine_1s_ease-in-out]" />
-            <span className="relative z-10">
-              {isLoggedIn ? "Start a Debate" : "Join to Debate"}
-            </span>
-            <svg className="w-4 h-4 relative z-10 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </Link>
-        </section>
+        </div>
 
-      </div>
+        {/* 2. THE PROBLEM VS SOLUTION */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-40 animate-slide-up delay-100">
+            <div className="p-8 rounded-3xl bg-red-950/10 border border-red-900/30">
+                <div className="flex items-center gap-3 mb-6">
+                    <XCircle className="w-6 h-6 text-red-500" />
+                    <h3 className="text-2xl font-bold text-white">Social Media Today</h3>
+                </div>
+                <ul className="space-y-4 text-zinc-400">
+                    <li className="flex gap-3">
+                        <span className="text-red-500/50">•</span> Infinite, unstructured comment threads.
+                    </li>
+                    <li className="flex gap-3">
+                        <span className="text-red-500/50">•</span> Facts are ignored; emotional outrage is rewarded.
+                    </li>
+                    <li className="flex gap-3">
+                        <span className="text-red-500/50">•</span> No winner, no conclusion, just noise.
+                    </li>
+                </ul>
+            </div>
+
+            <div className="p-8 rounded-3xl bg-green-950/10 border border-green-900/30 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 to-cyan-500"></div>
+                <div className="flex items-center gap-3 mb-6">
+                    <CheckCircle2 className="w-6 h-6 text-green-500" />
+                    <h3 className="text-2xl font-bold text-white">The Arguely Way</h3>
+                </div>
+                <ul className="space-y-4 text-zinc-300">
+                    <li className="flex gap-3">
+                        <span className="text-green-500">•</span> <strong>Turn-based</strong> rounds (Opening, Rebuttal, Closing).
+                    </li>
+                    <li className="flex gap-3">
+                        <span className="text-green-500">•</span> <strong>AI Referee</strong> flags logical fallacies in real-time.
+                    </li>
+                    <li className="flex gap-3">
+                        <span className="text-green-500">•</span> <strong>Clear Verdict</strong> based on scoring metrics.
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        {/* 3. HOW IT WORKS (Timeline) */}
+        <div className="mb-40 animate-slide-up delay-200">
+            <h2 className="text-4xl font-bold text-white text-center mb-16">How It Works</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
+                {/* Connecting Line (Desktop) */}
+                <div className="hidden md:block absolute top-12 left-0 w-full h-0.5 bg-gradient-to-r from-zinc-800 via-cyan-900 to-zinc-800 -z-10"></div>
+
+                {[
+                    { title: "1. Initiate", icon: MessageSquare, desc: "Choose a controversial topic and pick your side (For or Against)." },
+                    { title: "2. Match", icon: Users, desc: "Enter the Lobby to find a human rival, or challenge the AI Engine instantly." },
+                    { title: "3. Debate", icon: Sword, desc: "Exchange arguments in timed rounds. The AI Moderator watches for lies." },
+                    { title: "4. Verdict", icon: Scale, desc: "The Supreme Judge analyzes the transcript and declares a winner." },
+                ].map((step, i) => (
+                    <div key={i} className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl relative group hover:-translate-y-2 transition-transform duration-300">
+                        <div className="w-12 h-12 bg-black border border-zinc-700 rounded-xl flex items-center justify-center mb-4 group-hover:border-cyan-500 transition-colors z-10 relative">
+                            <step.icon className="w-6 h-6 text-zinc-400 group-hover:text-cyan-400" />
+                        </div>
+                        <h3 className="text-xl font-bold text-white mb-2">{step.title}</h3>
+                        <p className="text-sm text-zinc-500 leading-relaxed">{step.desc}</p>
+                    </div>
+                ))}
+            </div>
+        </div>
+
+        {/* 4. GAME MODES (The Cards) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-32">
+          
+          {/* LEFT: PvP */}
+          <div className="group relative bg-zinc-900/40 border border-zinc-800 p-10 rounded-[2rem] hover:bg-zinc-900/80 hover:border-cyan-500/30 transition-all duration-500 animate-slide-up delay-300 overflow-hidden">
+            <div className="absolute -right-10 -bottom-10 opacity-5 group-hover:opacity-10 transition-opacity rotate-12">
+              <Users className="w-64 h-64" />
+            </div>
+            
+            <div className="relative z-10">
+              <div className="w-16 h-16 bg-cyan-950/30 rounded-2xl flex items-center justify-center mb-8 border border-cyan-500/20 group-hover:scale-110 transition-transform shadow-[0_0_30px_-10px_rgba(6,182,212,0.3)]">
+                <Sword className="w-8 h-8 text-cyan-400" />
+              </div>
+              <h2 className="text-3xl font-black text-white mb-4">PvP Arena</h2>
+              <div className="h-1 w-12 bg-cyan-500 mb-6 rounded-full"></div>
+              <p className="text-zinc-400 leading-relaxed mb-8 text-lg">
+                The ultimate test of wit. Enter the Lobby, find a live opponent, and engage in a synchronous duel. 
+              </p>
+              
+              <div className="bg-black/40 rounded-xl p-5 border border-zinc-800/50 backdrop-blur-sm">
+                 <h4 className="text-white font-bold mb-3 flex items-center gap-2">
+                    <ShieldAlert className="w-4 h-4 text-yellow-500" /> Unique Feature: AI Referee
+                 </h4>
+                 <p className="text-sm text-zinc-500">
+                    In PvP mode, a silent AI Referee monitors the chat. If your opponent lies about a specific fact (e.g., stats, dates), 
+                    the Referee interrupts with a <strong>"Yellow Card"</strong> correction instantly.
+                 </p>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT: AI */}
+          <div className="group relative bg-zinc-900/40 border border-zinc-800 p-10 rounded-[2rem] hover:bg-zinc-900/80 hover:border-purple-500/30 transition-all duration-500 animate-slide-up delay-500 overflow-hidden">
+            <div className="absolute -right-10 -bottom-10 opacity-5 group-hover:opacity-10 transition-opacity rotate-12">
+              <BrainCircuit className="w-64 h-64" />
+            </div>
+            
+            <div className="relative z-10">
+              <div className="w-16 h-16 bg-purple-950/30 rounded-2xl flex items-center justify-center mb-8 border border-purple-500/20 group-hover:scale-110 transition-transform shadow-[0_0_30px_-10px_rgba(168,85,247,0.3)]">
+                <Zap className="w-8 h-8 text-purple-400" />
+              </div>
+              <h2 className="text-3xl font-black text-white mb-4">Solo vs AI</h2>
+              <div className="h-1 w-12 bg-purple-500 mb-6 rounded-full"></div>
+              <p className="text-zinc-400 leading-relaxed mb-8 text-lg">
+                Training mode. Face off against our fine-tuned Large Language Model. It mimics a top-tier debater: logical, relentless, and unbiased.
+              </p>
+
+              <div className="bg-black/40 rounded-xl p-5 border border-zinc-800/50 backdrop-blur-sm">
+                 <h4 className="text-white font-bold mb-3 flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-purple-500" /> Why use this?
+                 </h4>
+                 <p className="text-sm text-zinc-500">
+                    Perfect for preparing for real life arguments. Test your viewpoints against a machine that has read the entire internet. 
+                    It forces you to sharpen your logic before you face a human.
+                 </p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* 5. CTA */}
+        <div className="relative text-center mt-20 py-20 border-t border-zinc-900 animate-slide-up delay-500">
+          <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/20 to-transparent pointer-events-none"></div>
+          <h2 className="text-4xl md:text-5xl font-black text-white mb-8 tracking-tight">Ready to enter the arena?</h2>
+          <Link href="/create">
+            <button className="group relative px-12 py-6 bg-white text-black font-black text-xl rounded-full overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_50px_-15px_rgba(255,255,255,0.5)]">
+              <span className="relative z-10 flex items-center gap-3">
+                Start a Debate <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+              </span>
+            </button>
+          </Link>
+          <p className="mt-6 text-zinc-500">No account required to browse. Login to fight.</p>
+        </div>
+
+      </main>
     </div>
-  );
+  )
 }
