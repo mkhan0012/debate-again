@@ -1,60 +1,83 @@
 'use client'
 
 import { useRef, useState } from 'react';
-import { submitUserArgument, triggerAiResponse } from '@/app/action';
+import { submitUserArgument } from '@/app/action';
+import { useCompletion } from '@ai-sdk/react'; 
+import { useRouter } from 'next/navigation';
 
 export function ArgumentForm({ roundId, participantId }: { roundId: string, participantId: string }) {
   const formRef = useRef<HTMLFormElement>(null);
-  const [isThinking, setIsThinking] = useState(false);
-  const [inputValue, setInputValue] = useState("");
+  const router = useRouter();
+  
+  // Local state to handle the bubble visibility smoothly
+  const [showBubble, setShowBubble] = useState(false);
+
+  // Vercel AI SDK Hook
+  const { complete, completion, isLoading } = useCompletion({
+    api: '/api/chat',
+    body: { roundId }, 
+    onFinish: () => {
+      // 1. Hide the bubble when finished
+      setShowBubble(false);
+      
+      // 2. Refresh to show the official message in the chat list
+      router.refresh(); 
+    }
+  });
 
   const handleSubmit = async (formData: FormData) => {
-    const text = inputValue.trim();
-    if (!text) return;
-
-    // Optimistically clear input
-    setInputValue("");
+    const text = formData.get('argument') as string;
+    if (!text.trim()) return;
     
+    // Clear Input manually
+    if (formRef.current) formRef.current.reset();
+
     try {
-      // 1. Submit User Arg (Instant UI update via Server Action)
+      // 1. Submit User Argument (Server Action)
+      // This saves to DB and runs the Analyst
       await submitUserArgument(formData);
       
-      // 2. Artificial Delay for UX (Thinking State)
-      setIsThinking(true);
-      const minDelay = new Promise(resolve => setTimeout(resolve, 1500));
-      const aiRequest = triggerAiResponse(roundId, text);
+      // 2. Show the bubble right before we start streaming
+      setShowBubble(true);
       
-      await Promise.all([minDelay, aiRequest]);
+      // 3. Trigger AI Stream
+      await complete(' '); 
+      
     } catch (error) {
       console.error("Submission failed:", error);
-      // Optional: Restore input value on error
-      // setInputValue(text); 
-    } finally {
-      setIsThinking(false);
+      setShowBubble(false); // Hide if error
     }
   };
 
-  return (
-    <div className="relative group">
-      
-      {/* --- AI STATUS INDICATOR --- */}
-      <div className={`absolute -top-16 left-1/2 -translate-x-1/2 transition-all duration-500 ease-out transform
-        ${isThinking ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
-         <div className="flex items-center gap-3 bg-[#0A0A0A] border border-purple-500/30 px-5 py-2.5 rounded-full shadow-[0_0_30px_-5px_rgba(147,51,234,0.3)]">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-500"></span>
-            </span>
-            <span className="text-xs font-medium text-purple-200 tracking-wide">AI IS THINKING...</span>
-         </div>
-      </div>
+  // Only show if we explicitly want to (started streaming) OR if it's currently loading
+  const isVisible = showBubble || isLoading;
 
-      {/* --- COMMAND BAR --- */}
+  return (
+    <div className="relative group w-full max-w-3xl mx-auto">
+      
+      {/* --- LIVE STREAMING BUBBLE --- */}
+      {/* FIX: Controlled visibility so it doesn't get stuck */}
+      {isVisible && completion && (
+        <div className="absolute bottom-full left-0 mb-4 w-full animate-slide-up">
+           <div className="bg-[#0A0A0A]/90 border border-purple-500/30 p-4 rounded-2xl rounded-bl-sm shadow-[0_0_30px_-5px_rgba(147,51,234,0.2)] backdrop-blur-xl">
+              <div className="flex items-center gap-2 mb-2">
+                 <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+                 <span className="text-xs font-bold text-purple-400 uppercase tracking-widest">AI is typing...</span>
+              </div>
+              <p className="text-zinc-300 text-[15px] leading-relaxed">
+                {completion}
+                <span className="inline-block w-1.5 h-4 ml-1 align-middle bg-purple-500 animate-pulse"></span>
+              </p>
+           </div>
+        </div>
+      )}
+
+      {/* --- INPUT FORM --- */}
       <form 
         ref={formRef} 
         action={handleSubmit} 
         className={`relative bg-zinc-900/90 backdrop-blur-xl border transition-all duration-300 rounded-2xl shadow-2xl overflow-hidden
-        ${isThinking ? 'border-purple-500/30 ring-1 ring-purple-500/20' : 'border-white/10 hover:border-white/20 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/10'}`}
+        ${isLoading ? 'border-purple-500/30 ring-1 ring-purple-500/20' : 'border-white/10 hover:border-white/20 focus-within:border-white/20'}`}
       >
         <input type="hidden" name="roundId" value={roundId} />
         <input type="hidden" name="participantId" value={participantId} />
@@ -63,19 +86,15 @@ export function ArgumentForm({ roundId, participantId }: { roundId: string, part
           <textarea
             name="argument"
             rows={1}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            disabled={isThinking}
+            disabled={isLoading}
             className="w-full bg-transparent border-none text-zinc-200 placeholder-zinc-600 px-4 py-3 focus:ring-0 resize-none max-h-32 min-h-[50px] scrollbar-hide text-[15px] leading-relaxed"
-            placeholder={isThinking ? "Wait for AI response..." : "Type your argument..."}
+            placeholder={isLoading ? "AI is responding..." : "Type your argument..."}
             required
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                // Safety check for ref existence
-                if (inputValue.trim() && !isThinking && formRef.current) {
-                   const formData = new FormData(formRef.current);
-                   handleSubmit(formData);
+                if (!isLoading && formRef.current) {
+                   formRef.current.requestSubmit();
                 }
               }
             }}
@@ -83,13 +102,13 @@ export function ArgumentForm({ roundId, participantId }: { roundId: string, part
           
           <button
             type="submit"
-            disabled={isThinking || !inputValue.trim()}
+            disabled={isLoading}
             className={`mb-1 mr-1 p-2.5 rounded-xl transition-all duration-200 flex items-center justify-center
-              ${!inputValue.trim() || isThinking 
+              ${isLoading 
                 ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' 
-                : 'bg-white text-black hover:bg-zinc-200 hover:scale-105 active:scale-95 shadow-[0_0_15px_-3px_rgba(255,255,255,0.3)]'}`}
+                : 'bg-white text-black hover:bg-zinc-200 hover:scale-105 active:scale-95'}`}
           >
-            {isThinking ? (
+            {isLoading ? (
                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -104,7 +123,7 @@ export function ArgumentForm({ roundId, participantId }: { roundId: string, part
         
         {/* Progress Line */}
         <div className="absolute bottom-0 left-0 h-[2px] bg-linear-to-r from-purple-500 via-cyan-500 to-purple-500 w-full transform origin-left transition-transform duration-1000"
-             style={{ transform: isThinking ? 'scaleX(1)' : 'scaleX(0)' }}>
+             style={{ transform: isLoading ? 'scaleX(1)' : 'scaleX(0)' }}>
         </div>
       </form>
     </div>

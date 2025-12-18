@@ -1,29 +1,67 @@
 'use server'
 
-import { encrypt, decrypt } from '@/lib/encryption';
+import { encrypt } from '@/lib/encryption';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+import { getSession } from '@/lib/session';
 
-// Imports for AI logic
-import { generateAiRebuttal, moderateContent } from '@/app/actions/ai-services'; 
+// Import AI Services (Keep these if you have them)
 import { analyzeArgument } from '@/app/actions/ai-analyst'; 
+import { moderatePvpChat } from '@/app/actions/moderator'; 
 
-// --- ACTION 1: SUBMIT USER ARGUMENT ---
+// --- ACTION 1: CREATE NEW ROUND ---
+export async function createRound(formData: FormData) {
+  const session = await getSession();
+  if (!session?.userId) {
+    redirect('/login');
+  }
+
+  const topic = formData.get('topic') as string;
+  const mode = formData.get('mode') as string || 'GENERAL';
+
+  if (!topic) return;
+
+  // ⚠️ CRITICAL FIX: 
+  // PvP rounds must start as 'WAITING' to appear in the Lobby.
+  // Solo rounds (GENERAL) start as 'ACTIVE' immediately.
+  const initialStatus = mode === 'PVP' ? 'WAITING' : 'ACTIVE';
+
+  const round = await prisma.round.create({
+    data: {
+      topic,
+      mode,
+      status: initialStatus, // <--- THIS IS THE KEY LINE
+      userSide: 'For',
+      participants: {
+        create: {
+          userId: session.userId as string, 
+          role: 'DEBATER',
+        }
+      }
+    }
+  });
+
+  // Force the Lobby to update immediately
+  revalidatePath('/lobby');
+
+  redirect(`/debate/${round.id}`);
+}
+
+// ... (Keep submitUserArgument as it is) ...
 export async function submitUserArgument(formData: FormData) {
   const userArgumentText = formData.get('argument') as string;
   const roundId = formData.get('roundId') as string;
   const participantId = formData.get('participantId') as string;
 
-  // Validate inputs
   if (!userArgumentText || !roundId || !participantId) {
     throw new Error("Missing required fields");
   }
 
-  // 1. Encrypt the argument text
+  // A. Encrypt & Save User Argument
   const { contentEncrypted, iv } = encrypt(userArgumentText);
 
-  // 2. Save to Database
-  await prisma.argument.create({
+  const newArgument = await prisma.argument.create({
     data: { 
       contentEncrypted, 
       iv, 
@@ -32,82 +70,52 @@ export async function submitUserArgument(formData: FormData) {
     }
   });
 
-  // 3. Refresh the page data
-  revalidatePath(`/debate/${roundId}`);
-  return { success: true };
-}
-
-// --- ACTION 2: TRIGGER AI RESPONSE ---
-export async function triggerAiResponse(roundId: string, userArgumentText: string) {
+  // B. Fetch Round Context
   const round = await prisma.round.findUnique({
     where: { id: roundId },
-    include: { 
-      arguments: { 
-        orderBy: { createdAt: 'asc' },
-        include: { participant: true }
-      } 
-    }
+    select: { topic: true, mode: true }
   });
 
   if (!round) return { error: "Round not found" };
 
-  // 1. Check for Hostility first
-  const moderation = await moderateContent(userArgumentText);
-  const isHostile = moderation?.is_hostile || false;
-
-  // 2. Determine AI Stance & Debate Mode
-  // We use (round as any) because Prisma types might not have updated yet in your editor
-  const userSide = (round as any).userSide || "For"; 
-  const aiStance = userSide === "For" ? "Against" : "For";
-  const mode = (round as any).mode || "GENERAL"; // <--- NEW: Get the selected mode
-
-  // 3. Prepare Chat History for Context
-  // FIX: Added (arg: any) to prevent the build error
-  const chatHistory = round.arguments.map((arg: any) => {
-    try {
-      const text = decrypt(arg.contentEncrypted, arg.iv);
-      const role = arg.participant.role === 'AI' ? 'AI' : 'Opponent';
-      return `${role}: ${text}`;
-    } catch { return ""; }
-  });
-
-  // 4. Generate Analysis & Rebuttal (Parallel)
-  const [analysis, aiResponseText] = await Promise.all([
-    analyzeArgument(userArgumentText, round.topic),
-    // Pass the 'mode' to the AI service here vvv
-    generateAiRebuttal(round.topic, aiStance, chatHistory, isHostile, mode)
-  ]);
-
-  // 5. Update Analysis on the User's Last Argument
-  const lastUserArg = round.arguments[round.arguments.length - 1];
-  if (lastUserArg) {
+  // C. Run AI Analyst (The Coach) - For everyone
+  if (round.topic) {
+    const analysisResult = await analyzeArgument(userArgumentText, round.topic);
+    
     await prisma.argument.update({
-      where: { id: lastUserArg.id },
-      data: { aiAnalysis: analysis as any }
+      where: { id: newArgument.id },
+      data: { aiAnalysis: analysisResult as any }
     });
   }
 
-  // 6. Ensure AI Participant Exists
-  let aiParticipant = await prisma.participant.findFirst({
-    where: { roundId, role: 'AI' }
-  });
+  // D. Run AI Moderator (The Referee) - ONLY for PvP
+  if (round.mode === 'PVP') {
+    const moderatorCorrection = await moderatePvpChat(round.topic, userArgumentText);
 
-  if (!aiParticipant) {
-    aiParticipant = await prisma.participant.create({
-      data: { roundId, role: 'AI' } 
-    });
-  }
+    if (moderatorCorrection) {
+      // Find/Create Moderator Bot
+      let moderator = await prisma.participant.findFirst({
+        where: { roundId, role: 'MODERATOR' }
+      });
 
-  // 7. Save AI Response
-  const aiEncrypted = encrypt(aiResponseText);
-  await prisma.argument.create({
-    data: {
-      contentEncrypted: aiEncrypted.contentEncrypted,
-      iv: aiEncrypted.iv,
-      roundId,
-      participantId: aiParticipant.id,
+      if (!moderator) {
+        moderator = await prisma.participant.create({
+          data: { roundId, role: 'MODERATOR' }
+        });
+      }
+
+      // Post Correction
+      const modEncrypted = encrypt(moderatorCorrection);
+      await prisma.argument.create({
+        data: {
+          contentEncrypted: modEncrypted.contentEncrypted,
+          iv: modEncrypted.iv,
+          roundId,
+          participantId: moderator.id,
+        }
+      });
     }
-  });
+  }
 
   revalidatePath(`/debate/${roundId}`);
   return { success: true };

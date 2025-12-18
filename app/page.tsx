@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/session";
 import LiveStats from "@/components/LiveStats";
+import { Users, Sword } from "lucide-react"; // Import Icons
 
 export const metadata: Metadata = {
   title: "Arguely | Rational Discourse",
@@ -91,32 +92,42 @@ export default async function Home() {
         </p>
         
         <p className="max-w-2xl text-slate-500 mb-12 text-lg leading-relaxed animate-slide-up delay-300">
-          Arguely provides a structured environment to elevate online disagreement 
-          into productive debate. <span className="text-slate-300 font-medium border-b border-cyan-500/30 pb-0.5">Challenge ideas, not people.</span>
+          Choose your arena: Challenge our advanced AI Logic Engine or invite a friend for a 
+          <span className="text-cyan-400 font-medium ml-1">Live PvP Duel with AI Fact-Checking.</span>
         </p>
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-5 animate-slide-up" style={{ animationDelay: '400ms' }}>
+          
+          {/* PRIMARY: CREATE */}
           <Link 
-            href={isLoggedIn ? "/start" : "/login"}
+            href={isLoggedIn ? "/create" : "/login"}
             className="group relative px-8 py-4 bg-cyan-600 text-white font-bold rounded-full overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_0_40px_-10px_rgba(8,145,178,0.5)]"
           >
             <div className="absolute inset-0 w-full h-full bg-linear-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shine_1s_ease-in-out]" />
             <span className="relative z-10 flex items-center gap-2">
-              {isLoggedIn ? 'Start New Debate' : 'Join the Argument'}
-              <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
+              <Sword className="w-4 h-4" />
+              {isLoggedIn ? 'Create Arena' : 'Join the Argument'}
             </span>
           </Link>
           
-          {/* UPDATED: Changed from <button> to <Link> */}
-          <Link 
-            href="/about" 
-            className="px-8 py-4 bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 hover:text-white rounded-full transition-all hover:scale-105 backdrop-blur-sm"
-          >
-            See How It Works
-          </Link>
+          {/* SECONDARY: BROWSE LOBBY (If Logged In) OR ABOUT */}
+          {isLoggedIn ? (
+            <Link 
+              href="/lobby" 
+              className="px-8 py-4 bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 hover:text-white rounded-full transition-all hover:scale-105 backdrop-blur-sm flex items-center gap-2"
+            >
+              <Users className="w-4 h-4" />
+              Browse Lobby
+            </Link>
+          ) : (
+            <Link 
+              href="/about" 
+              className="px-8 py-4 bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 hover:text-white rounded-full transition-all hover:scale-105 backdrop-blur-sm"
+            >
+              See How It Works
+            </Link>
+          )}
         </div>
       </main>
 
@@ -130,25 +141,25 @@ export default async function Home() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
             {
-              quote: "Finally, a place where I don't get shouted at. The structured rounds forced me to actually listen to the other side.",
-              name: "Sarah Jenkins",
-              role: "Debater since 2023",
-              initials: "SJ",
-              color: "bg-purple-500"
+              quote: "The AI Referee is a game changer. My friend tried to use fake stats in our PvP duel, and the AI called him out instantly.",
+              name: "Alex Rivera",
+              role: "PvP Beta Tester",
+              initials: "AR",
+              color: "bg-cyan-500"
             },
             {
               quote: "Arguely is what social media should have been. I didn't change my mind on UBI, but I definitely respect the opposition now.",
               name: "David Kim",
               role: "Top Contributor",
               initials: "DK",
-              color: "bg-cyan-500"
+              color: "bg-blue-500"
             },
             {
-              quote: "The AI analyst is brutal but fair. It pointed out a logical fallacy I didn't even know I was making. Highly recommended.",
+              quote: "The Logic Coach is brutal but fair. It pointed out a logical fallacy I didn't even know I was making. Highly recommended.",
               name: "Marcus Ross",
               role: "Policy Researcher",
               initials: "MR",
-              color: "bg-blue-500"
+              color: "bg-purple-500"
             }
           ].map((card, i) => (
             <div key={i} className="glass-card p-8 rounded-2xl transition-all duration-500">
@@ -182,10 +193,10 @@ export default async function Home() {
 
           <div className="space-y-6">
             {[
-              "Define Topic & Stance", 
-              "Opening Statements (No Interruptions)", 
-              "Rebuttal & Cross-Examination", 
-              "Closing & AI Analysis"
+              "Choose Arena: Solo vs AI or PvP Duel", 
+              "Real-time AI Fact-Checking Referee", 
+              "Structured Rounds (No Interruptions)", 
+              "Post-Debate Analysis & Scoring"
             ].map((step, i) => (
               <div key={i} className="group flex items-center gap-4 text-slate-300 p-3 rounded-xl transition-colors hover:bg-white/5 cursor-default">
                 <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-800 text-cyan-400 text-sm font-bold font-mono shadow-sm group-hover:scale-110 group-hover:bg-cyan-900/30 group-hover:text-cyan-300 transition-all">
@@ -197,31 +208,35 @@ export default async function Home() {
           </div>
         </div>
 
-        {/* Animated Chat Bubbles */}
+        {/* Animated Chat Bubbles - VISUALIZING PVP REFEREE */}
         <div className="relative space-y-6 perspective-[1000px]">
           <div className="absolute left-8 top-10 bottom-10 w-0.5 bg-linear-to-b from-cyan-500/50 via-slate-700 to-red-500/50" />
 
+          {/* User Bubble */}
           <div className="relative ml-8 p-6 glass-card rounded-xl rounded-tl-none border-l-4 border-l-cyan-500 transform transition-all duration-500 hover:translate-x-2 hover:shadow-[0_0_30px_-5px_rgba(6,182,212,0.15)]">
             <div className="absolute -left-[2.2rem] top-6 w-3 h-3 bg-cyan-500 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.8)]" />
             <div className="text-cyan-400 text-xs font-bold uppercase tracking-widest mb-2 flex justify-between">
-              <span>Constructive Argument</span>
+              <span>You (User)</span>
               <span className="opacity-50">Round 1</span>
             </div>
             <p className="text-slate-300 text-sm leading-relaxed">
-              "Universal Basic Income encourages innovation by removing the fear of destitution, allowing individuals to take entrepreneurial risks."
+              "The earth is actually flat, as proven by the horizon line."
             </p>
           </div>
 
-          <div className="relative ml-8 p-6 glass-card rounded-xl rounded-tl-none border-l-4 border-l-red-500 transform transition-all duration-500 hover:translate-x-2 hover:shadow-[0_0_30px_-5px_rgba(239,68,68,0.15)]">
-            <div className="absolute -left-[2.2rem] top-6 w-3 h-3 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.8)]" />
-            <div className="text-red-400 text-xs font-bold uppercase tracking-widest mb-2 flex justify-between">
-              <span>Critical Rebuttal</span>
-              <span className="opacity-50">Round 2</span>
+          {/* AI Referee Bubble (Yellow Card) */}
+          <div className="relative ml-8 p-4 bg-yellow-900/20 border border-yellow-500/30 rounded-xl flex gap-3 transform transition-all duration-500 hover:scale-[1.02]">
+            <div className="shrink-0 pt-1">
+               <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div>
             </div>
-            <p className="text-slate-300 text-sm leading-relaxed">
-              "Without targeted allocation, UBI creates inflationary pressure that negates the purchasing power gains for the most vulnerable populations."
-            </p>
+            <div>
+               <div className="text-yellow-500 text-xs font-black uppercase tracking-widest mb-1">AI Referee Intervention</div>
+               <p className="text-yellow-100/80 text-sm leading-relaxed">
+                 ⚠️ Fact Check: This is incorrect. The Earth is an oblate spheroid. The horizon appears flat due to scale.
+               </p>
+            </div>
           </div>
+
         </div>
       </section>
 

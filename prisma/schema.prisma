@@ -28,6 +28,7 @@ model Round {
   status    String     @default("ACTIVE")
   userSide  String     @default("For")
   mode      String     @default("GENERAL")
+  scorecard Json?
   createdAt DateTime   @default(now())
   arguments Argument[]
   participants Participant[]

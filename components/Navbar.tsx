@@ -8,6 +8,7 @@ export default async function Navbar() {
   const isLoggedIn = !!session?.userId;
 
   // Initial (User letter or fallback)
+  // If your session has a username, you can use session.username[0] here
   const userInitial = session?.userId ? 'U' : 'G'; 
 
   return (
@@ -24,7 +25,8 @@ export default async function Navbar() {
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-zinc-400">
             {isLoggedIn && (
               <>
-                <Link href="/start" className="hover:text-white transition-colors">New Debate</Link>
+                {/* --- UPDATE: Link to /create --- */}
+                <Link href="/create" className="hover:text-white transition-colors">New Debate</Link>
                 <Link href="/history" className="hover:text-white transition-colors">History</Link>
               </>
             )}
