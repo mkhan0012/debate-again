@@ -10,13 +10,13 @@ export const metadata = {
 export default async function HistoryPage() {
   const session = await getSession();
   
-  // Guard clause: Redirect if not logged in
+  // Guard clause: Ensure logged in
   if (!session || !session.userId) {
     redirect("/login");
   }
 
   // 1. Fetch All Rounds for User
-  // Note: We cast session.userId as string here too for safety
+  // Fix: Cast session.userId to string here for Prisma
   const myRounds = await prisma.round.findMany({
     where: {
       participants: {
@@ -25,7 +25,7 @@ export default async function HistoryPage() {
     },
     include: {
       participants: {
-        include: { user: true } // Get opponent names
+        include: { user: true }
       }, 
     },
     orderBy: {
@@ -59,7 +59,7 @@ export default async function HistoryPage() {
         </div>
 
         {/* --- INTERACTIVE CLIENT COMPONENT --- */}
-        {/* FIX: Cast userId to string to resolve the type error */}
+        {/* Fix: Cast userId to string to match Interface props */}
         <HistoryInterface 
           aiRounds={aiRounds} 
           pvpRounds={pvpRounds} 
