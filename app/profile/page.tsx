@@ -8,13 +8,34 @@ export default async function ProfilePage() {
   const session = await getSession();
   if (!session?.userId) redirect('/login');
 
-  // 2. Fetch User Data
-  const user = await prisma.user.findUnique({
-    where: { id: String(session.userId) },
-    include: { participants: true }
-  });
+  let user;
 
-  const debateCount = user?.participants.length || 0;
+  try {
+    // 2. Fetch User Data with Error Handling
+    user = await prisma.user.findUnique({
+      where: { id: String(session.userId) },
+      include: { participants: true }
+    });
+  } catch (error) {
+    console.error("Database connection error:", error);
+    // Return a fallback UI instead of crashing the whole app
+    return (
+      <div className="min-h-screen bg-[#0B0C10] text-slate-300 flex flex-col items-center justify-center p-4">
+        <h2 className="text-xl font-bold text-red-400 mb-2">Unable to load profile</h2>
+        <p className="text-zinc-500 text-sm mb-4">Please check the database connection.</p>
+        <Link href="/" className="px-4 py-2 bg-zinc-800 rounded hover:bg-zinc-700 transition-colors">
+          Return Home
+        </Link>
+      </div>
+    );
+  }
+
+  // 3. Handle Missing User (e.g. deleted from DB but cookie persists)
+  if (!user) {
+    redirect('/login');
+  }
+
+  const debateCount = user.participants.length || 0;
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-[#0B0C10] text-slate-300 p-6 md:p-12">
@@ -24,12 +45,10 @@ export default async function ProfilePage() {
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 border-b border-zinc-800 pb-8">
           <div className="flex items-center gap-6">
             <div className="w-20 h-20 rounded-2xl bg-linear-to-br from-cyan-600 to-blue-700 flex items-center justify-center text-3xl text-white font-bold shadow-2xl shadow-cyan-900/20">
-              {/* FIX: Changed user.name to user.username */}
-              {user?.username?.[0]?.toUpperCase() || "U"}
+              {user.username?.[0]?.toUpperCase() || "U"}
             </div>
             <div>
-              {/* FIX: Changed user.name to user.username */}
-              <h1 className="text-3xl font-bold text-white mb-1">{user?.username || "Debater"}</h1>
+              <h1 className="text-3xl font-bold text-white mb-1">{user.username || "Debater"}</h1>
               <p className="text-zinc-500 font-mono text-sm uppercase tracking-widest">
                 Level 1 • Novice Logician
               </p>
@@ -37,7 +56,8 @@ export default async function ProfilePage() {
           </div>
           
           <div className="mt-6 md:mt-0 flex gap-4">
-            <Link href="/start" className="px-6 py-3 bg-white text-black font-bold text-sm uppercase tracking-wider rounded hover:bg-zinc-200 transition-colors">
+            {/* FIX: Link updated to /create */}
+            <Link href="/create" className="px-6 py-3 bg-white text-black font-bold text-sm uppercase tracking-wider rounded hover:bg-zinc-200 transition-colors">
               + New Argument
             </Link>
           </div>
