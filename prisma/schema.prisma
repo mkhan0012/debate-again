@@ -12,12 +12,16 @@ datasource db {
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
-  username  String   @unique // <--- Added Unique Username
+  username  String   @unique 
   password  String
   createdAt DateTime @default(now())
   
   // Relations
   participants Participant[]
+
+  // --- NEW: AI Memory of this User ---
+  // Stores: { "play_style": "...", "weakness": "...", "tips": "..." }
+  aiMemory     Json?   
 }
 
 // --- DEBATE MODELS (Unchanged) ---
