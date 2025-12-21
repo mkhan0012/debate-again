@@ -2,6 +2,7 @@ import { streamText } from 'ai';
 import { createGroq } from '@ai-sdk/groq';
 import { prisma } from '@/lib/prisma';
 import { decrypt, encrypt } from '@/lib/encryption';
+import { z } from 'zod';
 
 const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY, 
@@ -9,14 +10,21 @@ const groq = createGroq({
 
 export const maxDuration = 30;
 
+// Validate Input
+const ChatBodySchema = z.object({
+  roundId: z.string().uuid(),
+});
+
 export async function POST(req: Request) {
-  // --- SAFETY CHECK ---
-  let roundId;
+  // 1. Validation
+  let roundId: string;
   try {
-    const body = await req.json();
-    roundId = body.roundId;
+    const json = await req.json();
+    const parse = ChatBodySchema.safeParse(json);
+    if (!parse.success) return new Response('Invalid ID', { status: 400 });
+    roundId = parse.data.roundId;
   } catch (error) {
-    return new Response('Invalid JSON body', { status: 400 });
+    return new Response('Invalid JSON', { status: 400 });
   }
 
   // 2. Fetch Round
@@ -42,7 +50,7 @@ export async function POST(req: Request) {
     try {
       const text = decrypt(arg.contentEncrypted, arg.iv);
       const role = arg.participant.role === 'AI' ? 'assistant' : 'user';
-      if (role === 'user') lastUserText = text.toLowerCase(); // Capture for analysis
+      if (role === 'user') lastUserText = text.toLowerCase(); 
       return { role, content: text };
     } catch {
       return null;
@@ -54,11 +62,10 @@ export async function POST(req: Request) {
   const mode = round.mode || 'GENERAL';
 
   // --- FEATURE: DYNAMIC GEN Z TRIGGER ---
-  // Added "bro" and "damn" as requested
   const genZKeywords = [
     "no cap", "fr", "bet", "bruh", "cringe", "mid", "rizz", 
-    "yapping", "cooked", "based", "sus", "finna", "gyatt", "fanum",
-    "bro", "damn" // <--- NEW TRIGGERS
+    "yapping", "cooked", "based", "sus", "finna", "gyatt", "fanum", 
+    "bro", "damn", "skull", "deadass"
   ];
   
   const isGenZTriggered = genZKeywords.some(word => lastUserText.includes(word));
@@ -66,76 +73,85 @@ export async function POST(req: Request) {
   let styleOverride = "";
   if (isGenZTriggered) {
     styleOverride = `
-      🚨 STYLE OVERRIDE TRIGGERED 🚨
-      The user used a trigger word ("${lastUserText.substring(0, 15)}...").
-      - IMMEDIATE ACTION: Switch to Gen Z/Slang Persona.
-      - TONE: If the mode was "ADULT", combine swearing with slang (Toxic Gen Z).
-      - KEYWORDS: Use "bro", "damn", "fr", "💀" back at them.
-      - RULE: Mock them for trying to be cool.
+      🚨 STYLE OVERRIDE: ACTIVE 🚨
+      The user used slang ("${lastUserText.substring(0, 15)}...").
+      - IMMEDIATE ACTION: SWITCH TO GEN Z MODE.
+      - FORGET being professional. Be toxic/funny.
+      - USE: "bro", "fr", "💀", "cooked".
     `;
   }
 
-  // --- STANDARD MODE INSTRUCTIONS ---
+  // --- STRONG MODE INSTRUCTIONS (Optimized for 8b Model) ---
   let modeInstructions = "";
 
   if (mode === "POLITICS_INDIA") {
     modeInstructions = `
-      CONTEXT: Indian Politics.
-      - TONE: Professional, Sharp, TV Anchor style.
-      - CONTENT: Constitution, Laws, Facts.
-      - RULE: No slang unless triggered.
+      CONTEXT: Indian Politics (Serious).
+      - STYLE: TV News Anchor (Arnab style).
+      - KEYWORDS: Constitution, Supreme Court, Bill, Act.
+      - NOTE: Be sharp and aggressive, but no slang.
     `;
   } 
   else if (mode === "ADULT") {
     modeInstructions = `
-      CONTEXT: Adult/Uncensored.
-      - TONE: Raw, unfiltered, mature.
-      - PERMISSION: Profanity is ALLOWED.
-      - NOTE: Usually serious/gritty, BUT if 'Style Override' is active, switch to Gen Z slang immediately.
+      CONTEXT: Adult/Uncensored (Mature).
+      - STYLE: Raw, Dark, Realist.
+      - PERMISSION: You CAN swear (f*ck, sh*t) if it fits the argument.
+      - GOAL: Be brutally honest.
     `;
   } 
+  else if (mode === "GENZ") {
+    modeInstructions = `
+      CONTEXT: Gen Z / Brainrot (Funny).
+      - CRITICAL RULE: DO NOT WRITE LIKE A ROBOT.
+      - STYLE: lowercase only. use slang. act bored or savage.
+      - VOCAB: "no cap", "bet", "mid", "L take", "cooked", "touch grass", "yap session".
+      - EMOJIS: Use 💀, 😭, 🤡 after insults.
+      - EXAMPLE RESPONSE: "bro really thinks he did something 💀. that logic is mid at best."
+    `;
+  }
   else {
     modeInstructions = `
-      CONTEXT: General Formal Debate.
-      - TONE: Intellectual, Logical.
-      - RULE: maintain professionalism unless triggered.
+      CONTEXT: Professional Debate (Formal).
+      - STYLE: Academic, Logical, Polite.
+      - NO slang. NO emojis.
     `;
   }
 
-  // --- MEMORY & STRATEGY ---
+  // --- MEMORY ---
   let memoryContext = "";
   if (opponent?.user?.aiMemory) {
     const memory = opponent.user.aiMemory as any;
-    memoryContext = `[SCOUTING REPORT] Weakness: "${memory.detected_weakness}". Exploit this.`;
+    memoryContext = `[SCOUTING REPORT] User Weakness: "${memory.detected_weakness}". Exploit this.`;
   }
 
   const turnCount = round.arguments.length;
   let dynamicInstructions = turnCount < 6 
-    ? `STRATEGY: "THE TRAP". Ask questions. Be polite.` 
-    : `STRATEGY: "DOMINATION". Be authoritative. Crush their logic.`;
+    ? `STRATEGY: "THE BAIT". Ask a short question to trap them.` 
+    : `STRATEGY: "THE KILL". Roast their logic. Be definitive.`;
 
   // 4. Final System Prompt
   const systemPrompt = `
-    You are a skilled debater in a formal "Arguely" debate.
+    You are a skilled debater.
     Topic: "${round.topic}"
     Stance: ${aiStance} (Against User).
-    Opponent: "${opponentName}"
     
     ${modeInstructions}
     
-    ${styleOverride}  <-- This overrides the mode if triggered
+    ${styleOverride}
 
     ${memoryContext}
     ${dynamicInstructions}
 
     INSTRUCTIONS:
-    - Win via logic.
-    - Keep response under 100 words.
+    - Keep response SHORT (under 80 words).
+    - If Gen Z mode is active, NEVER be formal.
+    - Attack the user's last point directly.
   `;
 
-  // 5. Stream
+  // 5. Stream using 8b-instant (Fast & Free)
   const result = streamText({
-    model: groq('llama-3.3-70b-versatile'),
+    model: groq('llama-3.1-8b-instant'), // <--- PRIMARY MODEL
     system: systemPrompt,
     messages: messages,
     async onFinish({ text }) {

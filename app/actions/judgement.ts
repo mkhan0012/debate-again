@@ -11,7 +11,7 @@ const groq = createGroq({
 });
 
 export async function endRoundAndJudge(roundId: string) {
-  // 1. Fetch Round & Arguments with User Data
+  // 1. Fetch Round
   const round = await prisma.round.findUnique({
     where: { id: roundId },
     include: {
@@ -37,63 +37,83 @@ export async function endRoundAndJudge(roundId: string) {
     }
   }).filter(Boolean).join("\n\n");
 
-  // 3. Generate Judgment & Scouting Report
-  const { text } = await generateText({
-    model: groq('llama-3.3-70b-versatile'),
-    system: `
-      You are the Supreme Judge of a debate.
-      Topic: "${round.topic}"
-      Mode: "${round.mode}"
+  // 3. Generate Judgment (WITH ADVANCED GEN Z LOGIC + FALLBACK)
+  const systemPrompt = `
+    You are the Supreme Judge of a debate.
+    Topic: "${round.topic}"
+    Mode: "${round.mode}"
 
-      Your goal is to decide the winner AND create a "Scouting Report" on the human player for the next AI.
-      
-      OUTPUT FORMAT:
-      Return a single VALID JSON object. No markdown.
-      {
-        "winner": "Player A" | "Player B" | "AI" | "Draw",
-        "winnerName": "string",
-        "scores": { "playerA": number, "playerB": number },
-        "reasoning": "string",
-        "feedback": ["string"],
-        
-        // --- NEW: LEARNING SECTION ---
-        "user_analysis": {
-           "play_style": "string (e.g., Aggressive, Emotional, Statistical)",
-           "detected_weakness": "string (e.g., Ignores contradictions, Bad at math)",
-           "tip_for_next_ai": "string (max 1 sentence advice for the next AI opponent)"
-        }
+    Decide the winner and create a "Scouting Report".
+    
+    OUTPUT JSON:
+    {
+      "winner": "Player A" | "Player B" | "AI" | "Draw",
+      "winnerName": "string",
+      "scores": { "playerA": number, "playerB": number },
+      "reasoning": "string",
+      "feedback": ["string"],
+      "user_analysis": {
+          "play_style": "string",
+          "detected_weakness": "string",
+          "tip_for_next_ai": "string"
       }
+    }
 
-      SCORING ADJUSTMENTS (THE "STYLE SWITCH" RULE):
-      
-      1. **Global Override Check (The Easter Egg)**:
-         - Scan the user's text for Gen Z slang triggers (e.g., "no cap", "bet", "bruh", "damn", "rizz", "deadass", "yapping").
-         - **IF DETECTED**: The User has activated the "Gen Z Override". 
-           - **IGNORE** the standard professional rules below. 
-           - **DO NOT** penalize slang or informality.
-           - Rate strictly on "Aura", "Roast Quality", and Logic. The debate has effectively become a "Gen Z" round.
+    SCORING ADJUSTMENTS (THE "STYLE SWITCH" RULE):
+    1. **Global Override Check**:
+       - Scan the USER'S text for slang triggers (e.g., "no cap", "bet", "bruh", "damn", "rizz", "deadass").
+       - **IF DETECTED**: The User has activated "Gen Z Override". **IGNORE** standard professional rules. Rate strictly on "Aura", "Roast Quality", and Logic.
+    
+    2. **If NO Override is detected**:
+       - **"POLITICS_INDIA" / "GENERAL"**: Penalize slang, emojis, and lack of professionalism.
+       - **"ADULT"**: Do NOT penalize profanity. Judge on dominance.
+       - **"GENZ"**: Slang is required. Reward funny insults.
+  `;
 
-      2. **If NO Override is detected, follow Mode Rules**:
-         - **"POLITICS_INDIA" / "GENERAL"**: Penalize slang, emojis, and lack of professionalism.
-         - **"ADULT"**: Do NOT penalize profanity or aggression. Judge on dominance and logic.
-         - **"GENZ"**: Slang is required. Reward funny insults.
+  let textResponse = "";
 
-      INSTRUCTIONS:
-      1. Analyze the transcript. Did the user trigger the "Gen Z Override"?
-      2. Decide the winner based on the appropriate rule set.
-      3. Fill 'user_analysis' with insights to help the *next* AI beat this user.
-    `,
-    prompt: `TRANSCRIPT:\n\n${transcript}`,
-  });
+  try {
+    // ATTEMPT 1: Try the High-Quality Model (70b)
+    const { text } = await generateText({
+      model: groq('llama-3.3-70b-versatile'),
+      system: systemPrompt,
+      prompt: `TRANSCRIPT:\n\n${transcript}`,
+    });
+    textResponse = text;
 
-  // 4. Parse JSON
+  } catch (error) {
+    console.warn("⚠️ 70b Model Rate Limited. Switching to Fallback (8b)...");
+    
+    // ATTEMPT 2: Fallback to Faster Model (8b)
+    try {
+      const { text } = await generateText({
+        model: groq('llama-3.1-8b-instant'), // Uses different rate limit bucket
+        system: systemPrompt,
+        prompt: `TRANSCRIPT:\n\n${transcript}`,
+      });
+      textResponse = text;
+    } catch (secondError) {
+      console.error("❌ Both models failed:", secondError);
+      textResponse = "{}"; 
+    }
+  }
+
+  // 4. Parse JSON (WITH FALLBACK SAFETY)
   let result;
   try {
-    const cleanJson = text.replace(/```json|```/g, '').trim();
+    const cleanJson = textResponse.replace(/```json|```/g, '').trim();
     result = JSON.parse(cleanJson);
   } catch (error) {
-    console.error("JSON Parse Error:", text);
-    throw new Error("Failed to parse Judge's decision.");
+    console.error("JSON Parse Error or AI Failure:", textResponse);
+    // FALLBACK: Return a Draw so the game finishes gracefully
+    result = {
+        winner: "Draw",
+        winnerName: "Draw",
+        scores: { playerA: 50, playerB: 50 },
+        reasoning: "The debate was inconclusive due to high server load.",
+        feedback: ["Please try again later."],
+        user_analysis: null 
+    };
   }
 
   // 5. Save to Database
@@ -107,16 +127,21 @@ export async function endRoundAndJudge(roundId: string) {
     }
   });
 
-  // B. Save AI Memory (Scouting Report) to User
+  // B. Save AI Memory (Safe Wrapped)
   const humanParticipant = round.participants.find(p => p.role !== 'AI');
   
   if (humanParticipant && humanParticipant.userId && result.user_analysis) {
-    await prisma.user.update({
-      where: { id: humanParticipant.userId },
-      data: {
-        aiMemory: result.user_analysis 
-      } as any 
-    });
+    try {
+      await prisma.user.update({
+        where: { id: humanParticipant.userId },
+        data: {
+          // @ts-ignore
+          aiMemory: result.user_analysis 
+        }
+      });
+    } catch (e) {
+      console.warn("Failed to save AI Memory:", e);
+    }
   }
 
   revalidatePath(`/debate/${roundId}`);
