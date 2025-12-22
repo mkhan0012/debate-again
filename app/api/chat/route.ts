@@ -51,7 +51,7 @@ export async function POST(req: Request) {
   // --- LOGIC: GEN Z HANDLER ---
   const triggers = [
     "💀", "😭", "🤡", "🗿", "🔥", "👀", "🤫", "🧢", "🙏", "🤣", "💔",
-    "no cap", "fr", "bet", "bruh", "mid", "rizz", "yapping", "cooked"
+    "no cap", "fr", "bet", "bruh", "mid", "rizz", "yapping", "cooked", "man"
   ];
   const isGenZTriggered = triggers.some(t => lastUserText.includes(t));
 
