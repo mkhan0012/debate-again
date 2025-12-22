@@ -120,8 +120,9 @@ export default async function DebatePage({ params }: { params: Promise<{ id: str
              {round.topic}
            </h1>
 
+           {/* FIXED: Removed 'hidden md:block' and added responsive positioning */}
            {!isCompleted && !isWaitingForOpponent && currentUserParticipantId && (
-             <div className="absolute top-0 right-0 hidden md:block">
+             <div className="md:absolute md:top-0 md:right-0 mt-6 md:mt-0 flex justify-center">
                <EndDebateButton roundId={roundId} />
              </div>
            )}
