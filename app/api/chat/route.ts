@@ -1,8 +1,10 @@
+// app/api/chat/route.ts
 import { streamText } from 'ai';
 import { createGroq } from '@ai-sdk/groq';
 import { prisma } from '@/lib/prisma';
-import { decrypt, encrypt } from '@/lib/encryption';
+import { encrypt } from '@/lib/encryption';
 import { z } from 'zod';
+import { getDebateHistory } from '@/lib/debate-feed'; // <--- NEW FEED HELPER
 
 const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY, 
@@ -10,13 +12,11 @@ const groq = createGroq({
 
 export const maxDuration = 30;
 
-// Validate Input
 const ChatBodySchema = z.object({
   roundId: z.string().uuid(),
 });
 
 export async function POST(req: Request) {
-  // 1. Validation
   let roundId: string;
   try {
     const json = await req.json();
@@ -27,150 +27,80 @@ export async function POST(req: Request) {
     return new Response('Invalid JSON', { status: 400 });
   }
 
-  // 2. Fetch Round
+  // 1. Fetch Round Metadata Only (We don't need to fetch arguments here anymore)
   const round = await prisma.round.findUnique({
     where: { id: roundId },
-    include: {
-      arguments: {
-        orderBy: { createdAt: 'asc' },
-        include: { participant: { include: { user: true } } },
-      },
-      participants: { include: { user: true } }
-    },
+    select: { topic: true, mode: true, userSide: true } // <--- Optimization: Select only what we need
   });
 
   if (!round) return new Response('Round not found', { status: 404 });
 
-  const opponent = round.participants.find(p => p.role !== 'AI');
-  const opponentName = opponent?.user?.username || "Debater";
+  // 2. FEED: Fetch Recent History from DB using the Helper
+  // This automatically decrypts and formats the last 6 messages for the AI.
+  const recentMessages = await getDebateHistory(roundId, 6);
 
-  // 3. Prepare History & Capture Last Message
-  let lastUserText = "";
-  const messages: any[] = round.arguments.map((arg) => {
-    try {
-      const text = decrypt(arg.contentEncrypted, arg.iv);
-      const role = arg.participant.role === 'AI' ? 'assistant' : 'user';
-      if (role === 'user') lastUserText = text.toLowerCase(); 
-      return { role, content: text };
-    } catch {
-      return null;
-    }
-  }).filter(Boolean);
+  // 3. Extract Context for Logic (Gen Z Trigger)
+  // We look for the last message sent by the 'user' to check for slang
+  const lastUserMsg = [...recentMessages].reverse().find(m => m.role === 'user');
+  const lastUserText = lastUserMsg ? lastUserMsg.content.toLowerCase() : "";
 
   const userSide = round.userSide || 'For';
   const aiStance = userSide === 'For' ? 'Against' : 'For';
   const mode = round.mode || 'GENERAL';
 
-  // --- FEATURE: DYNAMIC GEN Z TRIGGER ---
-  const genZKeywords = [
-    "no cap", "fr", "bet", "bruh", "cringe", "mid", "rizz", 
-    "yapping", "cooked", "based", "sus", "finna", "gyatt", "fanum", 
-    "bro", "damn", "skull", "deadass"
+  // --- LOGIC: GEN Z HANDLER ---
+  const triggers = [
+    "💀", "😭", "🤡", "🗿", "🔥", "👀", "🤫", "🧢", "🙏", "🤣", "💔",
+    "no cap", "fr", "bet", "bruh", "mid", "rizz", "yapping", "cooked"
   ];
-  
-  const isGenZTriggered = genZKeywords.some(word => lastUserText.includes(word));
+  const isGenZTriggered = triggers.some(t => lastUserText.includes(t));
 
   let styleOverride = "";
   if (isGenZTriggered) {
-    styleOverride = `
-      🚨 STYLE OVERRIDE: ACTIVE 🚨
-      The user used slang ("${lastUserText.substring(0, 15)}...").
-      - IMMEDIATE ACTION: SWITCH TO GEN Z MODE.
-      - FORGET being professional. Be toxic/funny.
-      - USE: "bro", "fr", "💀", "cooked".
-    `;
+    styleOverride = `MODE: BRAINROT. USER SLANG DETECTED.
+    ACTION: REJECT FORMALITY. SPAM EMOJIS (💀,😭,🤡). MOCK THEM.`;
   }
 
-  // --- STRONG MODE INSTRUCTIONS (Optimized for 8b Model) ---
+  // --- LOGIC: MODE INSTRUCTIONS ---
   let modeInstructions = "";
+  if (mode === "POLITICS_INDIA") modeInstructions = "CTX: Indian Politics. STYLE: Aggressive Anchor. NO SLANG.";
+  else if (mode === "ADULT") modeInstructions = "CTX: Mature. STYLE: Raw, Honest. Profanity OK.";
+  else if (mode === "GENZ") modeInstructions = "CTX: Brainrot. STYLE: lowercase, slang. EMOJIS: 💀😭🤡. ROAST THEM.";
+  else modeInstructions = "CTX: Formal Debate. STYLE: Academic, Logical.";
 
-  if (mode === "POLITICS_INDIA") {
-    modeInstructions = `
-      CONTEXT: Indian Politics (Serious).
-      - STYLE: TV News Anchor (Arnab style).
-      - KEYWORDS: Constitution, Supreme Court, Bill, Act.
-      - NOTE: Be sharp and aggressive, but no slang.
-    `;
-  } 
-  else if (mode === "ADULT") {
-    modeInstructions = `
-      CONTEXT: Adult/Uncensored (Mature).
-      - STYLE: Raw, Dark, Realist.
-      - PERMISSION: You CAN swear (f*ck, sh*t) if it fits the argument.
-      - GOAL: Be brutally honest.
-    `;
-  } 
-  else if (mode === "GENZ") {
-    modeInstructions = `
-      CONTEXT: Gen Z / Brainrot (Funny).
-      - CRITICAL RULE: DO NOT WRITE LIKE A ROBOT.
-      - STYLE: lowercase only. use slang. act bored or savage.
-      - VOCAB: "no cap", "bet", "mid", "L take", "cooked", "touch grass", "yap session".
-      - EMOJIS: Use 💀, 😭, 🤡 after insults.
-      - EXAMPLE RESPONSE: "bro really thinks he did something 💀. that logic is mid at best."
-    `;
-  }
-  else {
-    modeInstructions = `
-      CONTEXT: Professional Debate (Formal).
-      - STYLE: Academic, Logical, Polite.
-      - NO slang. NO emojis.
-    `;
-  }
-
-  // --- MEMORY ---
-  let memoryContext = "";
-  if (opponent?.user?.aiMemory) {
-    const memory = opponent.user.aiMemory as any;
-    memoryContext = `[SCOUTING REPORT] User Weakness: "${memory.detected_weakness}". Exploit this.`;
-  }
-
-  const turnCount = round.arguments.length;
-  let dynamicInstructions = turnCount < 6 
-    ? `STRATEGY: "THE BAIT". Ask a short question to trap them.` 
-    : `STRATEGY: "THE KILL". Roast their logic. Be definitive.`;
-
-  // 4. Final System Prompt
   const systemPrompt = `
-    You are a skilled debater.
-    Topic: "${round.topic}"
-    Stance: ${aiStance} (Against User).
-    
+    Role: Debater. Topic: "${round.topic}". Stance: ${aiStance}.
     ${modeInstructions}
-    
     ${styleOverride}
-
-    ${memoryContext}
-    ${dynamicInstructions}
-
-    INSTRUCTIONS:
-    - Keep response SHORT (under 80 words).
-    - If Gen Z mode is active, NEVER be formal.
-    - Attack the user's last point directly.
+    Limit: 80 words. Attack last point.
   `;
 
-  // 5. Stream using 8b-instant (Fast & Free)
-  const result = streamText({
-    model: groq('llama-3.1-8b-instant'), // <--- PRIMARY MODEL
-    system: systemPrompt,
-    messages: messages,
-    async onFinish({ text }) {
-      try {
-        let aiParticipant = await prisma.participant.findFirst({
-          where: { roundId, role: 'AI' }
-        });
-        if (!aiParticipant) {
-          aiParticipant = await prisma.participant.create({
-             data: { roundId, role: 'AI' } 
-          });
-        }
-        const { contentEncrypted, iv } = encrypt(text);
-        await prisma.argument.create({
-          data: { contentEncrypted, iv, roundId, participantId: aiParticipant.id }
-        });
-      } catch (error) { console.error("Save failed:", error); }
-    },
-  });
+  // 4. Save Handler (Saves AI reply to DB)
+  const handleFinish = async ({ text }: { text: string }) => {
+    try {
+      let aiParticipant = await prisma.participant.findFirst({ where: { roundId, role: 'AI' } });
+      if (!aiParticipant) aiParticipant = await prisma.participant.create({ data: { roundId, role: 'AI' } });
+      const { contentEncrypted, iv } = encrypt(text);
+      await prisma.argument.create({ data: { contentEncrypted, iv, roundId, participantId: aiParticipant.id } });
+    } catch (error) { console.error("Save failed:", error); }
+  };
 
-  return result.toTextStreamResponse();
+  // 5. Stream with Fallback
+  try {
+    const result = streamText({
+      model: groq('llama-3.3-70b-versatile'),
+      system: systemPrompt,
+      messages: recentMessages as any, // <--- Fed from the Database
+      onFinish: handleFinish,
+    });
+    return result.toTextStreamResponse();
+  } catch (error) {
+    const result = streamText({
+      model: groq('llama-3.1-8b-instant'),
+      system: systemPrompt,
+      messages: recentMessages as any,
+      onFinish: handleFinish,
+    });
+    return result.toTextStreamResponse();
+  }
 }

@@ -1,26 +1,28 @@
 'use client'
 
 import { useRef, useState } from 'react';
-import { submitUserArgument } from '@/app/action';
+import { submitUserArgument, triggerAnalysis } from '@/app/action'; 
 import { useCompletion } from '@ai-sdk/react'; 
 import { useRouter } from 'next/navigation';
 
-export function ArgumentForm({ roundId, participantId }: { roundId: string, participantId: string }) {
+export function ArgumentForm({ 
+  roundId, 
+  participantId,
+  onOptimisticAdd // <--- This prop is key
+}: { 
+  roundId: string, 
+  participantId: string,
+  onOptimisticAdd?: (text: string) => void 
+}) {
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
-  
-  // Local state to handle the bubble visibility smoothly
   const [showBubble, setShowBubble] = useState(false);
 
-  // Vercel AI SDK Hook
   const { complete, completion, isLoading } = useCompletion({
     api: '/api/chat',
     body: { roundId }, 
     onFinish: () => {
-      // 1. Hide the bubble when finished
       setShowBubble(false);
-      
-      // 2. Refresh to show the official message in the chat list
       router.refresh(); 
     }
   });
@@ -29,34 +31,38 @@ export function ArgumentForm({ roundId, participantId }: { roundId: string, part
     const text = formData.get('argument') as string;
     if (!text.trim()) return;
     
-    // Clear Input manually
+    // 1. INSTANT UPDATE: Call the optimistic function immediately
+    if (onOptimisticAdd) {
+      onOptimisticAdd(text);
+    }
+
     if (formRef.current) formRef.current.reset();
 
     try {
-      // 1. Submit User Argument (Server Action)
-      // This saves to DB and runs the Analyst
-      await submitUserArgument(formData);
+      const result = await submitUserArgument(formData);
       
-      // 2. Show the bubble right before we start streaming
+      if (result && result.argumentId) {
+        setTimeout(async () => {
+          await triggerAnalysis(result.argumentId);
+        }, 2000); 
+      }
+      
       setShowBubble(true);
-      
-      // 3. Trigger AI Stream
       await complete(' '); 
       
     } catch (error) {
       console.error("Submission failed:", error);
-      setShowBubble(false); // Hide if error
+      setShowBubble(false);
     }
   };
 
-  // Only show if we explicitly want to (started streaming) OR if it's currently loading
   const isVisible = showBubble || isLoading;
 
   return (
+    // ... (Your existing JSX for the form UI)
     <div className="relative group w-full max-w-3xl mx-auto">
       
-      {/* --- LIVE STREAMING BUBBLE --- */}
-      {/* FIX: Controlled visibility so it doesn't get stuck */}
+      {/* AI Bubble */}
       {isVisible && completion && (
         <div className="absolute bottom-full left-0 mb-4 w-full animate-slide-up">
            <div className="bg-[#0A0A0A]/90 border border-purple-500/30 p-4 rounded-2xl rounded-bl-sm shadow-[0_0_30px_-5px_rgba(147,51,234,0.2)] backdrop-blur-xl">
@@ -72,7 +78,7 @@ export function ArgumentForm({ roundId, participantId }: { roundId: string, part
         </div>
       )}
 
-      {/* --- INPUT FORM --- */}
+      {/* Input Form */}
       <form 
         ref={formRef} 
         action={handleSubmit} 
@@ -119,11 +125,6 @@ export function ArgumentForm({ roundId, participantId }: { roundId: string, part
               </svg>
             )}
           </button>
-        </div>
-        
-        {/* Progress Line */}
-        <div className="absolute bottom-0 left-0 h-[2px] bg-linear-to-r from-purple-500 via-cyan-500 to-purple-500 w-full transform origin-left transition-transform duration-1000"
-             style={{ transform: isLoading ? 'scaleX(1)' : 'scaleX(0)' }}>
         </div>
       </form>
     </div>
