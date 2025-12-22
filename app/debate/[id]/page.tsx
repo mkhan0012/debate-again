@@ -6,23 +6,7 @@ import { endRoundAndJudge } from '@/app/actions/judgement'
 import { ShieldAlert, Zap } from 'lucide-react'
 import { WaitingRoom } from '@/components/WaitingRoom'
 import { ChatRefresher } from '@/components/ChatRefresher'
-import { LiveDebate } from '@/components/LiveDebate' // <--- IMPORT THE NEW COMPONENT
-
-function EndDebateButton({ roundId }: { roundId: string }) {
-  return (
-    <form action={async () => {
-      'use server'
-      await endRoundAndJudge(roundId)
-    }}>
-      <button 
-        type="submit"
-        className="px-5 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/50 rounded-xl text-xs font-bold uppercase tracking-widest transition-all hover:scale-105 active:scale-95"
-      >
-        End & Judge
-      </button>
-    </form>
-  )
-}
+import { LiveDebate } from '@/components/LiveDebate'
 
 export default async function DebatePage({ params }: { params: Promise<{ id: string }> }) {
   const { id: roundId } = await params
@@ -76,7 +60,6 @@ export default async function DebatePage({ params }: { params: Promise<{ id: str
   const isWaitingForOpponent = isPvp && humanCount < 2;
 
   // 4. PREPARE DATA FOR CLIENT COMPONENT
-  // We format the data here on the server to pass to LiveDebate
   const initialMessages = argumentsList.map((arg) => {
     let content = '[Decryption Error]'
     try { content = decrypt(arg.contentEncrypted, arg.iv) } catch {}
@@ -95,6 +78,12 @@ export default async function DebatePage({ params }: { params: Promise<{ id: str
       isModerator: role === 'MODERATOR'
     };
   });
+
+  // 5. SERVER ACTION TO PASS DOWN
+  const endDebateAction = async () => {
+    'use server'
+    await endRoundAndJudge(roundId)
+  }
 
   return (
     <div className="min-h-screen bg-[#030303] text-zinc-300 font-sans pb-32 relative overflow-hidden">
@@ -119,13 +108,6 @@ export default async function DebatePage({ params }: { params: Promise<{ id: str
            <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight max-w-3xl mx-auto">
              {round.topic}
            </h1>
-
-           {/* FIXED: Removed 'hidden md:block' and added responsive positioning */}
-           {!isCompleted && !isWaitingForOpponent && currentUserParticipantId && (
-             <div className="md:absolute md:top-0 md:right-0 mt-6 md:mt-0 flex justify-center">
-               <EndDebateButton roundId={roundId} />
-             </div>
-           )}
         </div>
 
         {/* --- DYNAMIC SWITCHER --- */}
@@ -142,6 +124,7 @@ export default async function DebatePage({ params }: { params: Promise<{ id: str
                 initialMessages={initialMessages}
                 roundId={roundId}
                 currentUserParticipantId={currentUserParticipantId || null}
+                onEndDebate={endDebateAction} // <--- Pass action here
              />
            </>
         )}

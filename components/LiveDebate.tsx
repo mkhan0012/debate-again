@@ -2,7 +2,7 @@
 
 import { useOptimistic } from 'react'
 import { ArgumentForm } from './ArgumentForm'
-import { ShieldAlert, Zap } from 'lucide-react'
+import { ShieldAlert, Zap, Flag } from 'lucide-react'
 
 // Define Message Structure
 type Message = {
@@ -19,11 +19,13 @@ type Message = {
 export function LiveDebate({ 
   initialMessages, 
   roundId, 
-  currentUserParticipantId 
+  currentUserParticipantId,
+  onEndDebate 
 }: { 
   initialMessages: Message[], 
   roundId: string, 
-  currentUserParticipantId: string | null 
+  currentUserParticipantId: string | null,
+  onEndDebate: () => Promise<void>
 }) {
 
   // THE MAGIC HOOK: Handles instant UI updates
@@ -115,15 +117,25 @@ export function LiveDebate({
       {/* FIXED FORM AT BOTTOM */}
       {currentUserParticipantId && (
            <div className="fixed bottom-0 left-0 right-0 z-50 p-4 md:p-6 bg-gradient-to-t from-black via-black/80 to-transparent">
-              <div className="max-w-3xl mx-auto flex gap-2 items-end">
+              <div className="max-w-3xl mx-auto flex gap-3 items-end">
                  <div className="grow">
-                    {/* KEY CHANGE: Passing the addOptimisticMessage handler here */}
+                    {/* Input Form */}
                     <ArgumentForm 
                       roundId={roundId} 
                       participantId={currentUserParticipantId}
                       onOptimisticAdd={addOptimisticMessage} 
                     />
                  </div>
+
+                 {/* NEW END DEBATE BUTTON */}
+                 <button 
+                    onClick={async () => await onEndDebate()}
+                    className="shrink-0 mb-1 px-4 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/50 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all hover:scale-105 active:scale-95 flex flex-col items-center justify-center gap-1 h-[60px]"
+                    title="End Debate & Judge"
+                 >
+                    <Flag className="w-4 h-4" />
+                    <span>End</span>
+                 </button>
               </div>
            </div>
       )}
