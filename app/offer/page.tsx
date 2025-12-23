@@ -1,4 +1,6 @@
 // app/offer/page.tsx
+'use client'; // <--- ADD THIS LINE AT THE TOP
+
 import Link from "next/link";
 import { Coins, Timer, Zap } from "lucide-react";
 
