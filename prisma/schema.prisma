@@ -37,6 +37,7 @@ model Round {
   status    String      @default("ACTIVE")
   userSide  String      @default("For")
   mode      String      @default("GENERAL")
+  aiPersona String   @default("LOGIC_LORD")
   scorecard Json?
   createdAt DateTime    @default(now())
   arguments Argument[]

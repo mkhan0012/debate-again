@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Round" ADD COLUMN     "aiPersona" TEXT NOT NULL DEFAULT 'LOGIC_LORD';
