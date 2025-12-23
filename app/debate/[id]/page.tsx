@@ -7,6 +7,8 @@ import { ShieldAlert, Zap } from 'lucide-react'
 import { WaitingRoom } from '@/components/WaitingRoom'
 import { ChatRefresher } from '@/components/ChatRefresher'
 import { LiveDebate } from '@/components/LiveDebate'
+// 1. IMPORT THE COMPONENT
+import DebateWrappedCard from '@/components/DebateWrappedCard'
 
 export default async function DebatePage({ params }: { params: Promise<{ id: string }> }) {
   const { id: roundId } = await params
@@ -79,7 +81,22 @@ export default async function DebatePage({ params }: { params: Promise<{ id: str
     };
   });
 
-  // 5. SERVER ACTION TO PASS DOWN
+  // 5. HELPER: Extract Winner/Loser Data for the Wrapped Card
+  const scorecard = round.scorecard as any;
+  const winnerName = scorecard?.winner || "Undecided";
+  
+  // Find the actual participant objects based on the winner name
+  const winnerParticipant = currentParticipants.find(p => p.user?.username === winnerName) || currentParticipants[0];
+  const loserParticipant = currentParticipants.find(p => p.user?.username !== winnerName && p.role === 'DEBATER');
+  
+  // Fallback data if user is missing
+  const winnerUsername = winnerParticipant?.user?.username || winnerName;
+  const winnerAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${winnerUsername}&backgroundColor=bef264`;
+  
+  const loserUsername = loserParticipant?.user?.username || "The AI";
+  const loserAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${loserUsername}&backgroundColor=c026d3`;
+
+  // 6. SERVER ACTION
   const endDebateAction = async () => {
     'use server'
     await endRoundAndJudge(roundId)
@@ -114,17 +131,40 @@ export default async function DebatePage({ params }: { params: Promise<{ id: str
         {isWaitingForOpponent && !isCompleted ? (
            <WaitingRoom roundId={roundId} />
         ) : isCompleted && round.scorecard ? (
-           <DebateScorecard data={round.scorecard} />
+           // --- UPDATED COMPLETION SECTION ---
+           <div className="space-y-16 animate-in fade-in duration-700">
+             
+             {/* Scorecard */}
+             <DebateScorecard data={round.scorecard} />
+             
+             {/* NEW: Viral Share Card */}
+             <div className="max-w-xl mx-auto">
+               <div className="flex items-center gap-4 mb-8">
+                  <div className="h-px bg-zinc-800 flex-grow"></div>
+                  <span className="text-zinc-500 text-xs font-mono uppercase tracking-widest">Victory Card</span>
+                  <div className="h-px bg-zinc-800 flex-grow"></div>
+               </div>
+               
+               <DebateWrappedCard 
+    topic={round.topic}
+    winner={(round.scorecard as any)?.winner || "Undecided"}
+    summary={(round.scorecard as any)?.summary || "Debate concluded."}
+    // Calculate simple stats or pass dummy data for now
+    timeWasted={`${Math.floor((argumentsList.length * 1.5))}m`} // Rough estimate: 1.5 mins per argument
+    totalTurns={argumentsList.length}
+/>
+             </div>
+
+           </div>
+           // ----------------------------------
         ) : (
            <>
              <ChatRefresher />
-
-             {/* RENDER THE LIVE CLIENT COMPONENT HERE */}
              <LiveDebate 
-                initialMessages={initialMessages}
-                roundId={roundId}
-                currentUserParticipantId={currentUserParticipantId || null}
-                onEndDebate={endDebateAction} // <--- Pass action here
+               initialMessages={initialMessages}
+               roundId={roundId}
+               currentUserParticipantId={currentUserParticipantId || null}
+               onEndDebate={endDebateAction}
              />
            </>
         )}
