@@ -19,36 +19,41 @@ model User {
   // Relations
   participants Participant[]
 
-  // --- NEW: AI Memory of this User ---
-  // Stores: { "play_style": "...", "weakness": "...", "tips": "..." }
-  aiMemory     Json?   
+  // --- AI Analysis Data ---
+  aiMemory     Json?
+  
+  // --- NEW: Single JSON Log for History ---
+  // Stores array: [{ event: "CLICK", page: "/home", time: "..." }, ...]
+  activityLogs Json?   
 }
+
+// (Deleted UserActivity Model)
 
 // --- DEBATE MODELS (Unchanged) ---
 
 model Round {
-  id        String     @id @default(uuid())
+  id        String      @id @default(uuid())
   topic     String
-  status    String     @default("ACTIVE")
-  userSide  String     @default("For")
-  mode      String     @default("GENERAL")
+  status    String      @default("ACTIVE")
+  userSide  String      @default("For")
+  mode      String      @default("GENERAL")
   scorecard Json?
-  createdAt DateTime   @default(now())
+  createdAt DateTime    @default(now())
   arguments Argument[]
   participants Participant[]
 }
 
 model Participant {
-  id        String     @id @default(uuid())
-  role      String     @default("DEBATER")
+  id        String      @id @default(uuid())
+  role      String      @default("DEBATER")
   
-  userId    String?    
-  user      User?      @relation(fields: [userId], references: [id])
+  userId    String?     
+  user      User?       @relation(fields: [userId], references: [id])
   
   roundId   String?
-  round     Round?     @relation(fields: [roundId], references: [id])
+  round     Round?      @relation(fields: [roundId], references: [id])
   
-  createdAt DateTime   @default(now())
+  createdAt DateTime    @default(now())
   arguments Argument[]
 }
 

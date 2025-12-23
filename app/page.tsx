@@ -1,8 +1,9 @@
+// app/page.tsx
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/session";
 import LiveStats from "@/components/LiveStats";
-import { Users, Sword } from "lucide-react"; // Import Icons
+import { Users, Sword, Timer, Zap, Coins } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Arguely | Rational Discourse",
@@ -14,32 +15,14 @@ export default async function Home() {
   const isLoggedIn = !!session?.userId;
 
   return (
-    // FIX: Added '-mt-16' to pull this page up behind the fixed Navbar
     <div className="relative min-h-screen bg-[#030303] text-slate-300 font-sans selection:bg-cyan-500/30 overflow-x-hidden -mt-16">
       
-      {/* --- INJECT CUSTOM ANIMATIONS --- */}
       <style>{`
-        @keyframes float {
-          0% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
-          100% { transform: translateY(0px); }
-        }
-        @keyframes float-delayed {
-          0% { transform: translateY(0px); }
-          50% { transform: translateY(20px); }
-          100% { transform: translateY(0px); }
-        }
-        @keyframes glow {
-          0%, 100% { opacity: 0.5; filter: blur(100px); }
-          50% { opacity: 0.8; filter: blur(120px); }
-        }
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes shine {
-          to { background-position: 200% center; }
-        }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-20px); } 100% { transform: translateY(0px); } }
+        @keyframes float-delayed { 0% { transform: translateY(0px); } 50% { transform: translateY(20px); } 100% { transform: translateY(0px); } }
+        @keyframes glow { 0%, 100% { opacity: 0.5; filter: blur(100px); } 50% { opacity: 0.8; filter: blur(120px); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shine { to { background-position: 200% center; } }
         .animate-float { animation: float 6s ease-in-out infinite; }
         .animate-float-delayed { animation: float-delayed 7s ease-in-out infinite; }
         .animate-glow-pulse { animation: glow 8s ease-in-out infinite; }
@@ -47,22 +30,9 @@ export default async function Home() {
         .delay-100 { animation-delay: 100ms; }
         .delay-200 { animation-delay: 200ms; }
         .delay-300 { animation-delay: 300ms; }
-        .text-shimmer {
-          background-size: 200% auto;
-          animation: shine 5s linear infinite;
-        }
-        .glass-card {
-          background: rgba(255, 255, 255, 0.03);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-        }
-        .glass-card:hover {
-          background: rgba(255, 255, 255, 0.05);
-          border-color: rgba(6, 182, 212, 0.3);
-          box-shadow: 0 0 30px rgba(6, 182, 212, 0.15);
-          transform: translateY(-5px);
-        }
+        .text-shimmer { background-size: 200% auto; animation: shine 5s linear infinite; }
+        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); }
+        .glass-card:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(6, 182, 212, 0.3); box-shadow: 0 0 30px rgba(6, 182, 212, 0.15); transform: translateY(-5px); }
       `}</style>
 
       {/* --- ANIMATED BACKGROUND ORBS --- */}
@@ -74,6 +44,33 @@ export default async function Home() {
 
       <main className="relative z-10 flex flex-col items-center justify-center text-center pt-32 px-4">
         
+        {/* --- SPECIAL OFFER SECTION --- */}
+        <div className="animate-slide-up bg-red-500/5 border border-red-500/20 rounded-2xl p-8 mb-16 max-w-2xl w-full relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          
+          <div className="relative z-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/30 text-red-500 text-[10px] font-black uppercase tracking-[0.2em] mb-4">
+              <Timer className="w-3 h-3" />
+              Offer ends in 3 days
+            </div>
+            
+            <h2 className="text-4xl md:text-5xl font-black tracking-tighter mb-4 italic uppercase text-white">
+              Win Money <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">
+                Fight AI
+              </span>
+            </h2>
+
+            <Link 
+              href={isLoggedIn ? "/create" : "/login"}
+              className="mt-6 inline-flex items-center gap-2 px-8 py-3 bg-red-600 hover:bg-red-500 text-white font-black text-sm uppercase tracking-widest rounded-sm transition-all hover:scale-105 shadow-lg shadow-red-900/20"
+            >
+              <Zap className="w-4 h-4 fill-current" />
+              Enter Challenge
+            </Link>
+          </div>
+        </div>
+
         {/* Live Stats */}
         <div className="animate-slide-up">
            <LiveStats />
@@ -98,8 +95,6 @@ export default async function Home() {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-5 animate-slide-up" style={{ animationDelay: '400ms' }}>
-          
-          {/* PRIMARY: CREATE */}
           <Link 
             href={isLoggedIn ? "/create" : "/login"}
             className="group relative px-8 py-4 bg-cyan-600 text-white font-bold rounded-full overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_0_40px_-10px_rgba(8,145,178,0.5)]"
@@ -111,7 +106,6 @@ export default async function Home() {
             </span>
           </Link>
           
-          {/* SECONDARY: BROWSE LOBBY (If Logged In) OR ABOUT */}
           {isLoggedIn ? (
             <Link 
               href="/lobby" 
@@ -208,11 +202,9 @@ export default async function Home() {
           </div>
         </div>
 
-        {/* Animated Chat Bubbles - VISUALIZING PVP REFEREE */}
         <div className="relative space-y-6 perspective-[1000px]">
           <div className="absolute left-8 top-10 bottom-10 w-0.5 bg-linear-to-b from-cyan-500/50 via-slate-700 to-red-500/50" />
-
-          {/* User Bubble */}
+          
           <div className="relative ml-8 p-6 glass-card rounded-xl rounded-tl-none border-l-4 border-l-cyan-500 transform transition-all duration-500 hover:translate-x-2 hover:shadow-[0_0_30px_-5px_rgba(6,182,212,0.15)]">
             <div className="absolute -left-[2.2rem] top-6 w-3 h-3 bg-cyan-500 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.8)]" />
             <div className="text-cyan-400 text-xs font-bold uppercase tracking-widest mb-2 flex justify-between">
@@ -224,7 +216,6 @@ export default async function Home() {
             </p>
           </div>
 
-          {/* AI Referee Bubble (Yellow Card) */}
           <div className="relative ml-8 p-4 bg-yellow-900/20 border border-yellow-500/30 rounded-xl flex gap-3 transform transition-all duration-500 hover:scale-[1.02]">
             <div className="shrink-0 pt-1">
                <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div>
@@ -236,7 +227,6 @@ export default async function Home() {
                </p>
             </div>
           </div>
-
         </div>
       </section>
 

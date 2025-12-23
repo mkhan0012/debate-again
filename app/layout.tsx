@@ -1,6 +1,8 @@
+// app/layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Navbar from "@/components/Navbar"; // <--- IMPORT THIS
+import Navbar from "@/components/Navbar"; 
+import ActivityTracker from "@/components/ActivityTracker"; // <--- IMPORT TRACKER
 import "./globals.css";
 
 const geistSans = Geist({
@@ -30,7 +32,10 @@ export default function RootLayout({
         {/* 1. Add Navbar here */}
         <Navbar />
 
-        {/* 2. Add this main wrapper */}
+        {/* 2. Add Activity Tracker (Runs on every page) */}
+        <ActivityTracker />
+
+        {/* 3. Add this main wrapper */}
         {/* The 'pt-16' ensures content isn't hidden behind the fixed navbar */}
         <main className="flex-1 relative pt-16">
           {children}
