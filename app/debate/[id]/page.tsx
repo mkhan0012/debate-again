@@ -7,7 +7,6 @@ import { ShieldAlert, Zap } from 'lucide-react'
 import { WaitingRoom } from '@/components/WaitingRoom'
 import { ChatRefresher } from '@/components/ChatRefresher'
 import { LiveDebate } from '@/components/LiveDebate'
-// 1. IMPORT THE COMPONENT
 import DebateWrappedCard from '@/components/DebateWrappedCard'
 
 export default async function DebatePage({ params }: { params: Promise<{ id: string }> }) {
@@ -27,15 +26,12 @@ export default async function DebatePage({ params }: { params: Promise<{ id: str
   const isPvp = round.mode === 'PVP';
   const isCompleted = round.status === "COMPLETED";
 
-  // 2. Fetch Chat History (Only if active)
-  let argumentsList: any[] = [];
-  if (!isCompleted) {
-    argumentsList = await prisma.argument.findMany({
-      where: { roundId },
-      orderBy: { createdAt: 'asc' },
-      include: { participant: { include: { user: true } } },
-    });
-  }
+  // 2. Fetch Chat History (ALWAYS fetch now)
+  const argumentsList = await prisma.argument.findMany({
+    where: { roundId },
+    orderBy: { createdAt: 'asc' },
+    include: { participant: { include: { user: true } } },
+  });
 
   // 3. User Logic
   let currentParticipants = [...round.participants];
@@ -81,26 +77,17 @@ export default async function DebatePage({ params }: { params: Promise<{ id: str
     };
   });
 
-  // 5. HELPER: Extract Winner/Loser Data for the Wrapped Card
-  const scorecard = round.scorecard as any;
-  const winnerName = scorecard?.winner || "Undecided";
-  
-  // Find the actual participant objects based on the winner name
-  const winnerParticipant = currentParticipants.find(p => p.user?.username === winnerName) || currentParticipants[0];
-  const loserParticipant = currentParticipants.find(p => p.user?.username !== winnerName && p.role === 'DEBATER');
-  
-  // Fallback data if user is missing
-  const winnerUsername = winnerParticipant?.user?.username || winnerName;
-  const winnerAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${winnerUsername}&backgroundColor=bef264`;
-  
-  const loserUsername = loserParticipant?.user?.username || "The AI";
-  const loserAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${loserUsername}&backgroundColor=c026d3`;
-
-  // 6. SERVER ACTION
+  // 5. SERVER ACTION
   const endDebateAction = async () => {
     'use server'
     await endRoundAndJudge(roundId)
   }
+
+  // HELPER: Robust Summary Extraction
+  // Uses 'summary' if available (New Debates), otherwise truncates 'reasoning' (Old Debates), otherwise default.
+  const rawScorecard = round.scorecard as any;
+  const displaySummary = rawScorecard?.summary 
+    || (rawScorecard?.reasoning ? rawScorecard.reasoning.substring(0, 80) + "..." : "Debate concluded.");
 
   return (
     <div className="min-h-screen bg-[#030303] text-zinc-300 font-sans pb-32 relative overflow-hidden">
@@ -131,7 +118,7 @@ export default async function DebatePage({ params }: { params: Promise<{ id: str
         {isWaitingForOpponent && !isCompleted ? (
            <WaitingRoom roundId={roundId} />
         ) : isCompleted && round.scorecard ? (
-           // --- UPDATED COMPLETION SECTION ---
+           // --- COMPLETED VIEW ---
            <div className="space-y-16 animate-in fade-in duration-700">
              
              {/* Scorecard */}
@@ -146,17 +133,14 @@ export default async function DebatePage({ params }: { params: Promise<{ id: str
                </div>
                
                <DebateWrappedCard 
-    topic={round.topic}
-    winner={(round.scorecard as any)?.winner || "Undecided"}
-    summary={(round.scorecard as any)?.summary || "Debate concluded."}
-    // Calculate simple stats or pass dummy data for now
-    timeWasted={`${Math.floor((argumentsList.length * 1.5))}m`} // Rough estimate: 1.5 mins per argument
-    totalTurns={argumentsList.length}
-/>
+                  topic={round.topic}
+                  winner={(round.scorecard as any)?.winner || "Undecided"}
+                  summary={displaySummary} // Uses the robust summary helper
+                  timeWasted={`${Math.ceil(argumentsList.length * 1.5)}m`} 
+                  totalTurns={argumentsList.length}
+              />
              </div>
-
            </div>
-           // ----------------------------------
         ) : (
            <>
              <ChatRefresher />

@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useRef, useState, useCallback } from "react";
+import React, { useRef, useState, useCallback, useEffect } from "react";
 import { toPng } from "html-to-image";
 
 interface DebateWrappedCardProps {
   topic: string;
   winner: string;
   summary: string;
-  timeWasted?: string; // e.g. "14m 20s"
+  timeWasted?: string; 
   totalTurns?: number;
   date?: string;
 }
@@ -15,22 +15,36 @@ interface DebateWrappedCardProps {
 export default function DebateWrappedCard({ 
   topic, 
   winner, 
-  summary,
+  summary = "Debate concluded.", // Default fallback
   timeWasted = "12m 30s",
   totalTurns = 8,
-  date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  date 
 }: DebateWrappedCardProps) {
   
   const ref = useRef<HTMLDivElement>(null);
   const [isCapturing, setIsCapturing] = useState(false);
+  
+  // --- FIX: State for Random Number & Date to prevent Hydration Error ---
+  const [fileId, setFileId] = useState("0000");
+  const [displayDate, setDisplayDate] = useState("");
 
-  // Helper to determine the "Vibe" emoji based on the summary text
+  useEffect(() => {
+    setFileId(Math.floor(Math.random() * 9999).toString().padStart(4, '0'));
+    if (date) {
+      setDisplayDate(date);
+    } else {
+      setDisplayDate(new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+    }
+  }, [date]);
+
+  // --- VIBE CHECK ---
   const getVibeEmoji = (text: string) => {
-    const t = text.toLowerCase();
-    if (t.includes("logic") || t.includes("fact")) return "🧠"; // Brain
-    if (t.includes("aggressive") || t.includes("attack")) return "🔪"; // Knife
-    if (t.includes("funny") || t.includes("joke")) return "💀"; // Skull
-    return "⚖️"; // Scales
+    const t = (text || "").toLowerCase();
+    if (t.includes("clown") || t.includes("🤡") || t.includes("skibidi")) return "🤡";
+    if (t.includes("aura") || t.includes("transcended") || t.includes("galaxy")) return "✨";
+    if (t.includes("cooked") || t.includes("roast") || t.includes("💀") || t.includes("knife")) return "💀";
+    if (t.includes("logic") || t.includes("fact") || t.includes("brain")) return "🧠";
+    return "⚖️"; 
   };
 
   const handleDownload = useCallback(() => {
@@ -71,11 +85,11 @@ export default function DebateWrappedCard({
                     <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                     <span className="font-mono text-[10px] text-red-500 uppercase tracking-widest">Case Closed</span>
                 </div>
-                <h2 className="font-serif italic text-zinc-500 text-sm">{date}</h2>
+                <h2 className="font-serif italic text-zinc-500 text-sm">{displayDate}</h2>
             </div>
             <div className="text-right">
                 <span className="font-mono text-[10px] text-zinc-600 uppercase tracking-widest block">File No.</span>
-                <span className="font-mono text-xs text-zinc-400">#ARG-{Math.floor(Math.random() * 9999)}</span>
+                <span className="font-mono text-xs text-zinc-400">#ARG-{fileId}</span>
             </div>
         </div>
 
@@ -140,7 +154,6 @@ export default function DebateWrappedCard({
         <div className="mt-6 pt-4 border-t border-zinc-900 flex justify-between items-center relative z-10">
             <p className="font-mono text-[10px] text-zinc-600 uppercase tracking-[0.2em]">Arguely.gg</p>
             <div className="flex gap-1 opacity-50">
-                 {/* Barcode-ish lines */}
                 {[...Array(8)].map((_, i) => (
                     <div key={i} className={`w-0.5 h-3 bg-zinc-600 ${i % 2 === 0 ? 'h-2' : 'h-4'}`}></div>
                 ))}
