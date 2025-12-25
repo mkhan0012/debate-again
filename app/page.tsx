@@ -1,9 +1,11 @@
-// app/page.tsx
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/session";
 import LiveStats from "@/components/LiveStats";
-import { Users, Sword, Timer, Zap, Coins } from "lucide-react";
+import { 
+  Users, Sword, Timer, Zap, Coins, 
+  FlaskConical, Eye, Network, CheckCircle2, XCircle 
+} from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Arguely | Rational Discourse",
@@ -44,33 +46,7 @@ export default async function Home() {
 
       <main className="relative z-10 flex flex-col items-center justify-center text-center pt-32 px-4">
         
-        {/* --- SPECIAL OFFER SECTION --- */}
-        <div className="animate-slide-up bg-red-500/5 border border-red-500/20 rounded-2xl p-8 mb-16 max-w-2xl w-full relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          
-          <div className="relative z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/30 text-red-500 text-[10px] font-black uppercase tracking-[0.2em] mb-4">
-              <Timer className="w-3 h-3" />
-              Offer ends in 3 days
-            </div>
-            
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter mb-4 italic uppercase text-white">
-              Win Money <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">
-                Fight AI
-              </span>
-            </h2>
-
-            <Link 
-              href={isLoggedIn ? "/create" : "/login"}
-              className="mt-6 inline-flex items-center gap-2 px-8 py-3 bg-red-600 hover:bg-red-500 text-white font-black text-sm uppercase tracking-widest rounded-sm transition-all hover:scale-105 shadow-lg shadow-red-900/20"
-            >
-              <Zap className="w-4 h-4 fill-current" />
-              Enter Challenge
-            </Link>
-          </div>
-        </div>
-
+    
         {/* Live Stats */}
         <div className="animate-slide-up">
            <LiveStats />
@@ -79,7 +55,7 @@ export default async function Home() {
         {/* Main Title */}
         <h1 className="text-6xl md:text-8xl font-black text-white tracking-tighter mb-8 mt-10 animate-slide-up delay-100 drop-shadow-2xl">
           Welcome to <br className="md:hidden" />
-          <span className="text-transparent bg-clip-text bg-linear-to-r from-cyan-300 via-blue-500 to-indigo-500 text-shimmer">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-blue-500 to-indigo-500 text-shimmer">
             Arguely.
           </span>
         </h1>
@@ -99,7 +75,7 @@ export default async function Home() {
             href={isLoggedIn ? "/create" : "/login"}
             className="group relative px-8 py-4 bg-cyan-600 text-white font-bold rounded-full overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_0_40px_-10px_rgba(8,145,178,0.5)]"
           >
-            <div className="absolute inset-0 w-full h-full bg-linear-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shine_1s_ease-in-out]" />
+            <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shine_1s_ease-in-out]" />
             <span className="relative z-10 flex items-center gap-2">
               <Sword className="w-4 h-4" />
               {isLoggedIn ? 'Create Arena' : 'Join the Argument'}
@@ -129,7 +105,7 @@ export default async function Home() {
       <section className="relative z-10 mt-48 max-w-7xl mx-auto px-6">
         <div className="text-center mb-16 animate-slide-up" style={{ animationDelay: '500ms' }}>
           <h2 className="text-3xl font-bold text-white mb-3">Community Consensus</h2>
-          <div className="h-1 w-20 bg-linear-to-r from-transparent via-cyan-500 to-transparent mx-auto rounded-full"></div>
+          <div className="h-1 w-20 bg-gradient-to-r from-transparent via-cyan-500 to-transparent mx-auto rounded-full"></div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -175,11 +151,69 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* --- NEW: THE ECOSYSTEM PIPELINE (Styled to match Homepage) --- */}
+      <section className="relative z-10 mt-48 mb-32 max-w-7xl mx-auto px-6">
+          <div className="text-center mb-20 animate-slide-up delay-300">
+              <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-cyan-500 mb-4">The Ecosystem</h2>
+              <h3 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter">The Architecture of Truth</h3>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative max-w-6xl mx-auto">
+              {/* Connecting Line (Desktop) */}
+              <div className="hidden md:block absolute top-16 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-white/10 to-transparent -z-10" />
+
+              {/* Node 1: FRAMEWORK */}
+              <a href="https://framework-seven-steel.vercel.app/" target="_blank" rel="noopener noreferrer" className="group relative glass-card p-8 rounded-3xl hover:bg-zinc-900 hover:border-blue-500/50 transition-all duration-300 text-center flex flex-col items-center">
+                  <div className="w-20 h-20 bg-black border border-white/10 rounded-full flex items-center justify-center mb-6 group-hover:border-blue-500 group-hover:text-blue-500 transition-colors shadow-2xl z-10 relative">
+                      <FlaskConical className="w-8 h-8 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                  </div>
+                  <div className="space-y-2">
+                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest group-hover:text-blue-500 transition-colors">Phase 1: The Lab</div>
+                      <h4 className="text-xl text-white font-bold">Framework</h4>
+                      <p className="text-sm text-slate-400 leading-relaxed">
+                          Beliefs are engineered. A simulation where viral ideas are constructed for maximum survival.
+                      </p>
+                  </div>
+              </a>
+
+              {/* Node 2: TRUTH IS OPTIONAL */}
+              <a href="https://truthis-optional.vercel.app/" target="_blank" rel="noopener noreferrer" className="group relative glass-card p-8 rounded-3xl hover:bg-zinc-900 hover:border-purple-500/50 transition-all duration-300 text-center flex flex-col items-center">
+                  <div className="w-20 h-20 bg-black border border-white/10 rounded-full flex items-center justify-center mb-6 group-hover:border-purple-500 group-hover:text-purple-500 transition-colors shadow-2xl z-10 relative">
+                      <Eye className="w-8 h-8 text-slate-400 group-hover:text-purple-500 transition-colors" />
+                  </div>
+                  <div className="space-y-2">
+                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest group-hover:text-purple-500 transition-colors">Phase 2: The Lens</div>
+                      <h4 className="text-xl text-white font-bold">Truth Is Optional</h4>
+                      <p className="text-sm text-slate-400 leading-relaxed">
+                          Reality is distorted. The belief is refracted through emotional vectors (Fear, Validation).
+                      </p>
+                  </div>
+              </a>
+
+              {/* Node 3: ARGUELY (Current) */}
+              <div className="group relative bg-cyan-950/20 border border-cyan-500/30 p-8 rounded-3xl shadow-[0_0_40px_-10px_rgba(6,182,212,0.15)] text-center flex flex-col items-center">
+                  <div className="w-20 h-20 bg-cyan-950/30 border border-cyan-500 rounded-full flex items-center justify-center mb-6 text-cyan-400 z-10 relative shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+                      <Sword className="w-8 h-8" />
+                  </div>
+                  <div className="space-y-2">
+                      <div className="text-[10px] font-bold text-cyan-600 uppercase tracking-widest">Phase 3: The Arena</div>
+                      <h4 className="text-xl text-white font-bold">Arguely</h4>
+                      <p className="text-sm text-slate-300 leading-relaxed">
+                          Logic is the weapon. You must defend or dismantle the distorted reality in fair combat.
+                      </p>
+                      <div className="inline-block mt-4 px-3 py-1 bg-cyan-500/10 text-cyan-400 text-[10px] font-bold uppercase rounded-full border border-cyan-500/20">
+                          Current System
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </section>
+
       {/* Feature Section */}
       <section className="relative z-10 mt-48 mb-32 max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
         <div>
           <h2 className="text-4xl font-bold text-white mb-6">
-            Structure creates <span className="text-transparent bg-clip-text bg-linear-to-r from-cyan-400 to-blue-500">Clarity.</span>
+            Structure creates <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Clarity.</span>
           </h2>
           <p className="text-slate-400 mb-10 text-lg leading-relaxed">
             We replace infinite scrolling and shout-matches with a focused, round-based system designed to extract the best arguments.
@@ -203,7 +237,7 @@ export default async function Home() {
         </div>
 
         <div className="relative space-y-6 perspective-[1000px]">
-          <div className="absolute left-8 top-10 bottom-10 w-0.5 bg-linear-to-b from-cyan-500/50 via-slate-700 to-red-500/50" />
+          <div className="absolute left-8 top-10 bottom-10 w-0.5 bg-gradient-to-b from-cyan-500/50 via-slate-700 to-red-500/50" />
           
           <div className="relative ml-8 p-6 glass-card rounded-xl rounded-tl-none border-l-4 border-l-cyan-500 transform transition-all duration-500 hover:translate-x-2 hover:shadow-[0_0_30px_-5px_rgba(6,182,212,0.15)]">
             <div className="absolute -left-[2.2rem] top-6 w-3 h-3 bg-cyan-500 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.8)]" />

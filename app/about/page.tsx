@@ -1,5 +1,9 @@
 import Link from 'next/link'
-import { Sword, Zap, ShieldAlert, Users, BrainCircuit, Activity, ArrowRight, Scale, CheckCircle2, XCircle, MessageSquare } from 'lucide-react'
+import { 
+  Sword, Zap, ShieldAlert, Users, BrainCircuit, Activity, 
+  ArrowRight, Scale, CheckCircle2, XCircle, MessageSquare, 
+  FlaskConical, Eye, Network 
+} from 'lucide-react'
 
 export default function AboutPage() {
   return (
@@ -47,7 +51,7 @@ export default function AboutPage() {
         </div>
 
         {/* 2. THE PROBLEM VS SOLUTION */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-40 animate-slide-up delay-100">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-32 animate-slide-up delay-100">
             <div className="p-8 rounded-3xl bg-red-950/10 border border-red-900/30">
                 <div className="flex items-center gap-3 mb-6">
                     <XCircle className="w-6 h-6 text-red-500" />
@@ -86,8 +90,66 @@ export default function AboutPage() {
             </div>
         </div>
 
-        {/* 3. HOW IT WORKS (Timeline) */}
+        {/* 3. NEW: THE ECOSYSTEM PIPELINE */}
         <div className="mb-40 animate-slide-up delay-200">
+            <div className="text-center mb-16">
+                <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-cyan-500 mb-4">The Ecosystem</h2>
+                <h3 className="text-3xl md:text-4xl text-white font-bold uppercase tracking-tighter">The Architecture of Truth</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative max-w-6xl mx-auto">
+                {/* Connecting Line (Desktop) */}
+                <div className="hidden md:block absolute top-16 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-zinc-800 to-transparent -z-10" />
+
+                {/* Node 1: FRAMEWORK */}
+                <a href="https://framework-seven-steel.vercel.app/" target="_blank" rel="noopener noreferrer" className="group relative bg-zinc-900/40 border border-zinc-800 p-8 rounded-3xl hover:bg-zinc-900 hover:border-blue-500/50 transition-all duration-300 text-center flex flex-col items-center">
+                    <div className="w-20 h-20 bg-black border border-zinc-700 rounded-full flex items-center justify-center mb-6 group-hover:border-blue-500 group-hover:text-blue-500 transition-colors shadow-2xl z-10 relative">
+                        <FlaskConical className="w-8 h-8" />
+                    </div>
+                    <div className="space-y-2">
+                        <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest group-hover:text-blue-500 transition-colors">Phase 1: The Lab</div>
+                        <h4 className="text-xl text-white font-bold">Framework</h4>
+                        <p className="text-sm text-zinc-500 leading-relaxed">
+                            Beliefs are engineered. A simulation where viral ideas are constructed for maximum survival.
+                        </p>
+                    </div>
+                </a>
+
+                {/* Node 2: TRUTH IS OPTIONAL */}
+                <a href="https://truthis-optional.vercel.app/" target="_blank" rel="noopener noreferrer" className="group relative bg-zinc-900/40 border border-zinc-800 p-8 rounded-3xl hover:bg-zinc-900 hover:border-purple-500/50 transition-all duration-300 text-center flex flex-col items-center">
+                    <div className="w-20 h-20 bg-black border border-zinc-700 rounded-full flex items-center justify-center mb-6 group-hover:border-purple-500 group-hover:text-purple-500 transition-colors shadow-2xl z-10 relative">
+                        <Eye className="w-8 h-8" />
+                    </div>
+                    <div className="space-y-2">
+                        <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest group-hover:text-purple-500 transition-colors">Phase 2: The Lens</div>
+                        <h4 className="text-xl text-white font-bold">Truth Is Optional</h4>
+                        <p className="text-sm text-zinc-500 leading-relaxed">
+                            Reality is distorted. The belief is refracted through emotional vectors (Fear, Validation).
+                        </p>
+                    </div>
+                </a>
+
+                {/* Node 3: ARGUELY */}
+                <div className="group relative bg-zinc-900 border border-cyan-500/30 p-8 rounded-3xl shadow-[0_0_40px_-10px_rgba(6,182,212,0.15)] text-center flex flex-col items-center">
+                    <div className="w-20 h-20 bg-cyan-950/30 border border-cyan-500 rounded-full flex items-center justify-center mb-6 text-cyan-400 z-10 relative shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+                        <Sword className="w-8 h-8" />
+                    </div>
+                    <div className="space-y-2">
+                        <div className="text-[10px] font-bold text-cyan-600 uppercase tracking-widest">Phase 3: The Arena</div>
+                        <h4 className="text-xl text-white font-bold">Arguely</h4>
+                        <p className="text-sm text-zinc-400 leading-relaxed">
+                            Logic is the weapon. You must defend or dismantle the distorted reality in fair combat.
+                        </p>
+                        <div className="inline-block mt-4 px-3 py-1 bg-cyan-500/10 text-cyan-400 text-[10px] font-bold uppercase rounded-full border border-cyan-500/20">
+                            Current System
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {/* 4. HOW IT WORKS (Timeline) */}
+        <div className="mb-40 animate-slide-up delay-300">
             <h2 className="text-4xl font-bold text-white text-center mb-16">How It Works</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
@@ -111,7 +173,7 @@ export default function AboutPage() {
             </div>
         </div>
 
-        {/* 4. GAME MODES (The Cards) */}
+        {/* 5. GAME MODES (The Cards) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-32">
           
           {/* LEFT: PvP */}
@@ -131,13 +193,13 @@ export default function AboutPage() {
               </p>
               
               <div className="bg-black/40 rounded-xl p-5 border border-zinc-800/50 backdrop-blur-sm">
-                 <h4 className="text-white font-bold mb-3 flex items-center gap-2">
+                  <h4 className="text-white font-bold mb-3 flex items-center gap-2">
                     <ShieldAlert className="w-4 h-4 text-yellow-500" /> Unique Feature: AI Referee
-                 </h4>
-                 <p className="text-sm text-zinc-500">
+                  </h4>
+                  <p className="text-sm text-zinc-500">
                     In PvP mode, a silent AI Referee monitors the chat. If your opponent lies about a specific fact (e.g., stats, dates), 
                     the Referee interrupts with a <strong>"Yellow Card"</strong> correction instantly.
-                 </p>
+                  </p>
               </div>
             </div>
           </div>
@@ -159,20 +221,20 @@ export default function AboutPage() {
               </p>
 
               <div className="bg-black/40 rounded-xl p-5 border border-zinc-800/50 backdrop-blur-sm">
-                 <h4 className="text-white font-bold mb-3 flex items-center gap-2">
+                  <h4 className="text-white font-bold mb-3 flex items-center gap-2">
                     <Activity className="w-4 h-4 text-purple-500" /> Why use this?
-                 </h4>
-                 <p className="text-sm text-zinc-500">
+                  </h4>
+                  <p className="text-sm text-zinc-500">
                     Perfect for preparing for real life arguments. Test your viewpoints against a machine that has read the entire internet. 
                     It forces you to sharpen your logic before you face a human.
-                 </p>
+                  </p>
               </div>
             </div>
           </div>
 
         </div>
 
-        {/* 5. CTA */}
+        {/* 6. CTA */}
         <div className="relative text-center mt-20 py-20 border-t border-zinc-900 animate-slide-up delay-500">
           <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/20 to-transparent pointer-events-none"></div>
           <h2 className="text-4xl md:text-5xl font-black text-white mb-8 tracking-tight">Ready to enter the arena?</h2>
