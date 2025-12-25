@@ -1,18 +1,19 @@
 'use client'
 
-import { useState, useActionState, useEffect } from 'react' // Added useEffect
-import { useSearchParams } from 'next/navigation' // Added useSearchParams
+import { useState, useActionState, useEffect, Suspense } from 'react' 
+import { useSearchParams } from 'next/navigation' 
 import { createDebate } from '@/app/actions/debate' 
 import { Zap, Users, ArrowRight, Sword, Shield, Skull, Smile, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 
-export default function CreatePage() {
+// 1. EXTRACT THE FORM LOGIC INTO ITS OWN COMPONENT
+function CreateDebateForm() {
   const [mode, setMode] = useState<'GENERAL' | 'PVP'>('GENERAL')
   const [position, setPosition] = useState<'For' | 'Against'>('For')
   const [persona, setPersona] = useState<'LOGIC_LORD' | 'ROAST_MASTER' | 'GENTLE_GUIDE'>('LOGIC_LORD')
-  const [topicInput, setTopicInput] = useState('') // Controlled input for topic
+  const [topicInput, setTopicInput] = useState('') 
 
-  // --- NEW: HANDLE INCOMING VIRAL SIGNALS ---
+  // Handle Incoming Data
   const searchParams = useSearchParams()
   const initialTopic = searchParams.get('topic')
   const source = searchParams.get('source')
@@ -22,9 +23,7 @@ export default function CreatePage() {
         setTopicInput(initialTopic)
     }
   }, [initialTopic])
-  // ------------------------------------------
 
-  // FIX: Use the hook to handle the form action
   const [state, formAction, isPending] = useActionState(createDebate, null)
 
   return (
@@ -42,7 +41,7 @@ export default function CreatePage() {
              Initiate Protocol
            </h1>
 
-           {/* --- NEW: SOURCE SPECIFIC ALERT --- */}
+           {/* Source Specific Alert */}
            {source === 'TIO' ? (
                <div className="inline-flex items-center gap-2 px-4 py-2 rounded bg-red-950/30 border border-red-900/50 text-red-400 font-mono text-xs tracking-widest mb-4 animate-pulse">
                    <AlertCircle className="w-4 h-4" />
@@ -51,7 +50,6 @@ export default function CreatePage() {
            ) : (
                <p className="text-zinc-500 text-lg">Define parameters. Logic is your only weapon.</p>
            )}
-           {/* ---------------------------------- */}
            
            {!source && (
              <Link href="/lobby" className="inline-block mt-4 text-cyan-400 hover:text-white border-b border-cyan-500/30 pb-0.5 text-sm font-bold tracking-wide transition-colors">
@@ -68,7 +66,6 @@ export default function CreatePage() {
           </div>
         )}
 
-        {/* Use formAction from the hook */}
         <form action={formAction} className="space-y-12 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
           
           {/* 1. TOPIC & SIDE */}
@@ -200,4 +197,13 @@ export default function CreatePage() {
       </div>
     </div>
   )
+}
+
+// 2. WRAP THE PAGE EXPORT IN SUSPENSE
+export default function CreatePage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-[#030303] flex items-center justify-center text-white font-mono uppercase tracking-widest animate-pulse">Initializing Protocol...</div>}>
+            <CreateDebateForm />
+        </Suspense>
+    )
 }
