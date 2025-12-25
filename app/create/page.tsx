@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useActionState } from 'react' // Import useActionState
+import { useState, useActionState, useEffect } from 'react' // Added useEffect
+import { useSearchParams } from 'next/navigation' // Added useSearchParams
 import { createDebate } from '@/app/actions/debate' 
 import { Zap, Users, ArrowRight, Sword, Shield, Skull, Smile, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
@@ -9,6 +10,19 @@ export default function CreatePage() {
   const [mode, setMode] = useState<'GENERAL' | 'PVP'>('GENERAL')
   const [position, setPosition] = useState<'For' | 'Against'>('For')
   const [persona, setPersona] = useState<'LOGIC_LORD' | 'ROAST_MASTER' | 'GENTLE_GUIDE'>('LOGIC_LORD')
+  const [topicInput, setTopicInput] = useState('') // Controlled input for topic
+
+  // --- NEW: HANDLE INCOMING VIRAL SIGNALS ---
+  const searchParams = useSearchParams()
+  const initialTopic = searchParams.get('topic')
+  const source = searchParams.get('source')
+
+  useEffect(() => {
+    if (initialTopic) {
+        setTopicInput(initialTopic)
+    }
+  }, [initialTopic])
+  // ------------------------------------------
 
   // FIX: Use the hook to handle the form action
   const [state, formAction, isPending] = useActionState(createDebate, null)
@@ -27,11 +41,23 @@ export default function CreatePage() {
            <h1 className="text-4xl md:text-6xl font-black text-white mb-4 tracking-tighter">
              Initiate Protocol
            </h1>
-           <p className="text-zinc-500 text-lg">Define parameters. Logic is your only weapon.</p>
+
+           {/* --- NEW: SOURCE SPECIFIC ALERT --- */}
+           {source === 'TIO' ? (
+               <div className="inline-flex items-center gap-2 px-4 py-2 rounded bg-red-950/30 border border-red-900/50 text-red-400 font-mono text-xs tracking-widest mb-4 animate-pulse">
+                   <AlertCircle className="w-4 h-4" />
+                   INCOMING VIRAL THREAT DETECTED. ENGAGE LOGIC ENGINE.
+               </div>
+           ) : (
+               <p className="text-zinc-500 text-lg">Define parameters. Logic is your only weapon.</p>
+           )}
+           {/* ---------------------------------- */}
            
-           <Link href="/lobby" className="inline-block mt-4 text-cyan-400 hover:text-white border-b border-cyan-500/30 pb-0.5 text-sm font-bold tracking-wide transition-colors">
-             Looking for an opponent? Browse Open Chambers &rarr;
-           </Link>
+           {!source && (
+             <Link href="/lobby" className="inline-block mt-4 text-cyan-400 hover:text-white border-b border-cyan-500/30 pb-0.5 text-sm font-bold tracking-wide transition-colors">
+               Looking for an opponent? Browse Open Chambers &rarr;
+             </Link>
+           )}
         </div>
 
         {/* Display Server Error if it exists */}
@@ -51,6 +77,8 @@ export default function CreatePage() {
                 <input 
                   name="topic"
                   type="text" 
+                  value={topicInput}
+                  onChange={(e) => setTopicInput(e.target.value)}
                   placeholder="Enter topic (e.g., 'AI will replace coders')"
                   required
                   className="w-full bg-zinc-900/50 border border-zinc-800 rounded-2xl px-6 py-6 pl-16 text-xl md:text-2xl font-bold text-white placeholder-zinc-700 focus:outline-none focus:border-white/20 transition-all shadow-xl"
