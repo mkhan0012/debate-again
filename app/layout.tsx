@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import ActivityTracker from "@/components/ActivityTracker"; // <--- Ensure this is imported
 import { Suspense } from "react"; // <--- Import Suspense
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -42,6 +43,9 @@ export default function RootLayout({
         <main className="flex-1 relative pt-16">
           {children}
         </main>
+
+        {/* 4. Analytics */}
+        <Analytics />
 
       </body>
     </html>
